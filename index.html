@@ -19,6 +19,7 @@
       --text-muted: #9a9eab;
       --orange: #ff6b2b;
       --orange-hover: #e0551b;
+      --sigint-green: #00ff66;
       --border: rgba(244, 238, 224, 0.12);
       --ai-bubble: #1f2533;
     }
@@ -81,6 +82,11 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      transition: color 0.3s;
+    }
+
+    .status.sigint-active {
+      color: var(--sigint-green);
     }
 
     .dot {
@@ -89,11 +95,33 @@
       background: #34d399;
       border-radius: 50%;
       box-shadow: 0 0 8px #34d399;
+      transition: all 0.3s;
+    }
+
+    .status.sigint-active .dot {
+      background: var(--sigint-green);
+      box-shadow: 0 0 8px var(--sigint-green);
     }
 
     .actions {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ESPECTROGRAMA OCULTO POR DEFECTO */
+    #sigint-container {
+      display: none;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 4px 8px;
+      border: 1px solid rgba(0, 255, 102, 0.3);
+      border-radius: 6px;
+    }
+
+    #sigint-canvas {
+      background: #000;
+      border-radius: 4px;
     }
 
     .btn-icon {
@@ -208,6 +236,9 @@
     .msg-meta {
       font-size: 0.7rem;
       color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .chips-wrapper {
@@ -321,10 +352,14 @@
       <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
       <div>
         <div class="brand-title">PaketeAI 8.0 Ultra</div>
-        <div class="status"><span class="dot"></span> Historial Local Guardado</div>
+        <div class="status" id="header-status"><span class="dot"></span> Historial Local Guardado</div>
       </div>
     </div>
     <div class="actions">
+      <!-- PANEL SIGINT SEGURO (SE ACTIVA SOLO POR COMANDO) -->
+      <div id="sigint-container">
+        <canvas id="sigint-canvas" width="90" height="20"></canvas>
+      </div>
       <button class="btn-icon" onclick="resetChat()" title="Borrar chat e historial"><i class="fa-solid fa-trash"></i></button>
     </div>
   </header>
@@ -355,18 +390,146 @@
     const STORAGE_KEY = 'pakete_ai_chat_history';
 
     let chatHistory = [];
+    let sigintActive = false;
+    let audioCtx = null;
+    let isAnimatingSigInt = false;
 
     // CARGAR HISTORIAL AL INICIAR
     window.addEventListener('DOMContentLoaded', () => {
       loadHistory();
+      drawSigIntSpectrum(false);
     });
 
+    // MOTOR AUDIO Y VOZ MILITAR OCULTO (SIGINT)
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playRadioBeep(frequency = 1200, duration = 0.08) {
+      initAudioContext();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function playRadioStatic(duration = 0.2) {
+      initAudioContext();
+      const bufferSize = audioCtx.sampleRate * duration;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1800;
+      filter.Q.value = 3.0;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      noise.start();
+    }
+
+    function drawSigIntSpectrum(active = false) {
+      const canvas = document.getElementById('sigint-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      isAnimatingSigInt = active;
+
+      function render() {
+        ctx.fillStyle = 'rgba(5, 10, 7, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = '#00ff66';
+        ctx.beginPath();
+
+        const sliceWidth = canvas.width / 16;
+        let x = 0;
+
+        for (let i = 0; i < 16; i++) {
+          const v = isAnimatingSigInt ? (Math.random() * 12 + 3) : 2;
+          const y = (i % 2 === 0) ? (canvas.height / 2 + v / 2) : (canvas.height / 2 - v / 2);
+
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+
+          x += sliceWidth;
+        }
+
+        ctx.stroke();
+
+        if (isAnimatingSigInt) {
+          requestAnimationFrame(render);
+        } else {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.strokeStyle = '#004411';
+          ctx.beginPath();
+          ctx.moveTo(0, canvas.height / 2);
+          ctx.lineTo(canvas.width, canvas.height / 2);
+          ctx.stroke();
+        }
+      }
+
+      render();
+    }
+
+    function hablarConEfectoRadio(texto) {
+      if (!('speechSynthesis' in window)) return;
+
+      const cleanText = texto.replace(/<[^>]*>?/gm, '').replace(/`/g, '');
+      window.speechSynthesis.cancel();
+
+      playRadioBeep(1400, 0.06);
+      setTimeout(() => playRadioStatic(0.15), 60);
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.rate = 1.05;
+      utterance.pitch = 0.95;
+      utterance.lang = 'es-ES';
+
+      utterance.onstart = () => drawSigIntSpectrum(true);
+      utterance.onend = () => {
+        drawSigIntSpectrum(false);
+        playRadioStatic(0.12);
+        setTimeout(() => playRadioBeep(800, 0.08), 100);
+      };
+
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 200);
+    }
+
+    // GESTIÓN DE HISTORIAL
     function saveHistory() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
-      } catch (e) {
-        console.error('Error al guardar historial:', e);
-      }
+      } catch (e) {}
     }
 
     function loadHistory() {
@@ -376,22 +539,19 @@
           chatHistory = JSON.parse(saved);
           if (Array.isArray(chatHistory) && chatHistory.length > 0) {
             chatBox.innerHTML = '';
-            chatHistory.forEach(msg => renderMsgDOM(msg.role, msg.text, msg.source));
+            chatHistory.forEach(msg => renderMsgDOM(msg.role, msg.text, msg.source, false));
             return;
           }
-        } catch (e) {
-          console.error('Error al leer historial guardado:', e);
-        }
+        } catch (e) {}
       }
 
-      // Si no hay historial, creamos el mensaje de bienvenida inicial
       chatHistory = [{
         role: 'ai',
         text: '¡Hola! Sistema activado con **guardado automático de historial**. Escribe tus dudas, adjunta archivos con 📎 o genera imágenes con `/img`.',
         source: ''
       }];
       saveHistory();
-      renderMsgDOM(chatHistory[0].role, chatHistory[0].text, chatHistory[0].source);
+      renderMsgDOM(chatHistory[0].role, chatHistory[0].text, chatHistory[0].source, false);
     }
 
     function handleKey(e) {
@@ -419,6 +579,29 @@
       if (!text) return;
 
       inputArea.value = '';
+
+      // COMANDO SECRETO: `/sigint` o `/radio`
+      if (text.toLowerCase() === '/sigint' || text.toLowerCase() === '/radio') {
+        sigintActive = !sigintActive;
+
+        const sigBox = document.getElementById('sigint-container');
+        const statusEl = document.getElementById('header-status');
+
+        if (sigintActive) {
+          sigBox.style.display = 'flex';
+          statusEl.classList.add('sigint-active');
+          statusEl.innerHTML = '<span class="dot"></span> SIGINT AUDIO PROTOCOL ACTIVE';
+          appendMsg('ai', '⚠️ **[PROTOCOLO SIGINT ACTIVADO]** Transmisión de voz cifrada y análisis de señales habilitados.', 'SIGINT SYSTEM');
+        } else {
+          window.speechSynthesis.cancel();
+          sigBox.style.display = 'none';
+          statusEl.classList.remove('sigint-active');
+          statusEl.innerHTML = '<span class="dot"></span> Historial Local Guardado';
+          appendMsg('ai', 'Modo SIGINT desactivado. Canal encriptado cerrado.', 'SYSTEM');
+        }
+        return;
+      }
+
       appendMsg('user', text);
 
       // GENERACIÓN DE IMAGEN
@@ -472,7 +655,6 @@
       }
     }
 
-    // ADJUNTAR ARCHIVOS LOCALES
     function procesarArchivo(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -486,7 +668,6 @@
       event.target.value = '';
     }
 
-    // OBTENER RESPUESTA DE TEXTO
     async function fetchFastAI(prompt) {
       if (window.puter && window.puter.ai) {
         try {
@@ -511,15 +692,13 @@
       throw new Error('Sin conexión');
     }
 
-    // REGISTRAR EN HISTORIAL Y RENDERIZAR
     function appendMsg(role, text, source = '') {
       chatHistory.push({ role, text, source });
       saveHistory();
-      renderMsgDOM(role, text, source);
+      renderMsgDOM(role, text, source, true);
     }
 
-    // DIBUJAR EN EL DOM
-    function renderMsgDOM(role, text, source = '') {
+    function renderMsgDOM(role, text, source = '', triggerAudio = false) {
       const row = document.createElement('div');
       row.className = `msg-row ${role}`;
 
@@ -536,6 +715,10 @@
 
       chatBox.appendChild(row);
       chatBox.scrollTop = chatBox.scrollHeight;
+
+      if (role === 'ai' && sigintActive && triggerAudio && !text.includes('<img')) {
+        hablarConEfectoRadio(text);
+      }
     }
 
     function showLoader() {
@@ -562,6 +745,7 @@
     }
 
     function resetChat() {
+      window.speechSynthesis.cancel();
       chatHistory = [];
       localStorage.removeItem(STORAGE_KEY);
       chatBox.innerHTML = '';
