@@ -109,7 +109,6 @@
       gap: 10px;
     }
 
-    /* ESPECTROGRAMA OCULTO POR DEFECTO */
     #sigint-container {
       display: none;
       align-items: center;
@@ -391,6 +390,8 @@
     let chatHistory = [];
     let sigintActive = false;
     let audioCtx = null;
+    let masterDistortionNode = null;
+    let masterBandpassNode = null;
     let isAnimatingSigInt = false;
     let radioNoiseNode = null;
     let radioWhistleNode = null;
@@ -401,18 +402,8 @@
       drawSigIntSpectrum(false);
     });
 
-    function initAudioContext() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
-
-    // GENERADOR DE CURVA DE DISTORSIÓN (VALVULAR/ANALOG)
-    function makeDistortionCurve(amount = 50) {
-      const k = typeof amount === 'number' ? amount : 50;
+    function makeDistortionCurve(amount = 180) {
+      const k = typeof amount === 'number' ? amount : 180;
       const n_samples = 44100;
       const curve = new Float32Array(n_samples);
       const deg = Math.PI / 180;
@@ -423,12 +414,77 @@
       return curve;
     }
 
-    // INICIAR RUIDO DE AMBIENTE Y DISTORSIÓN DE GUERRA EN TIEMPO REAL
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Cadena maestra de distorsión y filtro telefónico/militar antiguo
+        masterDistortionNode = audioCtx.createWaveShaper();
+        masterDistortionNode.curve = makeDistortionCurve(250);
+        masterDistortionNode.oversample = '4x';
+
+        masterBandpassNode = audioCtx.createBiquadFilter();
+        masterBandpassNode.type = 'bandpass';
+        masterBandpassNode.frequency.value = 950;
+        masterBandpassNode.Q.value = 3.2;
+
+        masterDistortionNode.connect(masterBandpassNode);
+        masterBandpassNode.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // SIMULACIÓN DE DISPAROS/EXPLOSIONES DISTORSIONADAS DE GUERRA
+    function playDistortedGunshot() {
+      if (!audioCtx || !sigintActive) return;
+
+      const bufferSize = audioCtx.sampleRate * 0.25;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.03));
+      }
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+
+      noise.connect(gain);
+      gain.connect(masterDistortionNode);
+
+      noise.start();
+    }
+
+    // SONIDO DE BEEP DE RADIO PROCESADO POR DISTORSIÓN
+    function playRadioBeep(frequency = 1400, duration = 0.08) {
+      initAudioContext();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+      osc.connect(gain);
+      gain.connect(masterDistortionNode);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    // MODO DE ATMÓSFERA DE GUERRA
     function startWarRadioAtmosphere() {
       initAudioContext();
       stopWarRadioAtmosphere();
 
-      // 1. Ruido blanco / estática de fondo
       const bufferSize = audioCtx.sampleRate * 2;
       const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const output = buffer.getChannelData(0);
@@ -440,70 +496,49 @@
       radioNoiseNode.buffer = buffer;
       radioNoiseNode.loop = true;
 
-      // 2. Filtro de radio de guerra (recorte agresivo de frecuencias)
-      const bandpass = audioCtx.createBiquadFilter();
-      bandpass.type = 'bandpass';
-      bandpass.frequency.value = 1100;
-      bandpass.Q.value = 2.5;
-
-      // 3. Saturación
-      const distortion = audioCtx.createWaveShaper();
-      distortion.curve = makeDistortionCurve(120);
-      distortion.oversample = '4x';
-
-      // 4. Silbato de interferencia heterodina
       radioWhistleNode = audioCtx.createOscillator();
       const whistleGain = audioCtx.createGain();
       radioWhistleNode.type = 'sawtooth';
-      radioWhistleNode.frequency.value = 2400; 
-      whistleGain.gain.value = 0.015;
+      radioWhistleNode.frequency.value = 2200; 
+      whistleGain.gain.value = 0.02;
 
-      // LFO para hacer oscilar la señal y dar la sensación de interferencia móvil
       const lfo = audioCtx.createOscillator();
       const lfoGain = audioCtx.createGain();
-      lfo.frequency.value = 0.4;
-      lfoGain.gain.value = 600;
+      lfo.frequency.value = 0.5;
+      lfoGain.gain.value = 500;
       lfo.connect(lfoGain);
       lfoGain.connect(radioWhistleNode.frequency);
       lfo.start();
 
       radioNoiseGain = audioCtx.createGain();
-      radioNoiseGain.gain.value = 0.18;
+      radioNoiseGain.gain.value = 0.22;
 
-      // Conexión del grafo de audio
-      radioNoiseNode.connect(bandpass);
-      bandpass.connect(distortion);
-      distortion.connect(radioNoiseGain);
-
+      radioNoiseNode.connect(radioNoiseGain);
       radioWhistleNode.connect(whistleGain);
       whistleGain.connect(radioNoiseGain);
 
-      radioNoiseGain.connect(audioCtx.destination);
+      radioNoiseGain.connect(masterDistortionNode);
 
       radioNoiseNode.start();
       radioWhistleNode.start();
 
-      // Micro-cortes y chispazos aleatorios de señal
-      simulateSignalDropouts();
+      simulateWarEvents();
     }
 
-    function simulateSignalDropouts() {
+    function simulateWarEvents() {
       if (!isAnimatingSigInt || !radioNoiseGain) return;
-      
-      const delay = Math.random() * 800 + 300;
+
+      const delay = Math.random() * 1200 + 400;
       setTimeout(() => {
         if (radioNoiseGain && isAnimatingSigInt) {
-          const dropType = Math.random();
-          if (dropType > 0.7) {
-            // Bajón repentino de señal
-            radioNoiseGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-            radioNoiseGain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.2);
-          } else if (dropType < 0.2) {
-            // Estallido de interferencia
-            radioNoiseGain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-            radioNoiseGain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.15);
+          const rand = Math.random();
+          if (rand > 0.8) {
+            playDistortedGunshot();
+          } else if (rand < 0.25) {
+            radioNoiseGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            radioNoiseGain.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.15);
           }
-          simulateSignalDropouts();
+          simulateWarEvents();
         }
       }, delay);
     }
@@ -517,24 +552,6 @@
         try { radioWhistleNode.stop(); } catch(e) {}
         radioWhistleNode = null;
       }
-    }
-
-    function playRadioBeep(frequency = 1200, duration = 0.1) {
-      initAudioContext();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-
-      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
     }
 
     function drawSigIntSpectrum(active = false) {
@@ -589,18 +606,18 @@
       window.speechSynthesis.cancel();
 
       startWarRadioAtmosphere();
-      playRadioBeep(1800, 0.12);
+      playRadioBeep(1600, 0.1);
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 0.92; // Tono más pausado y robótico de época
-      utterance.pitch = 0.75; // Voz grave/militar distorsionada
+      utterance.rate = 0.88;
+      utterance.pitch = 0.65;
       utterance.lang = 'es-ES';
 
       utterance.onstart = () => drawSigIntSpectrum(true);
       utterance.onend = () => {
         drawSigIntSpectrum(false);
-        playRadioBeep(600, 0.15);
-        setTimeout(() => stopWarRadioAtmosphere(), 300);
+        playRadioBeep(500, 0.15);
+        setTimeout(() => stopWarRadioAtmosphere(), 250);
       };
 
       utterance.onerror = () => {
@@ -613,7 +630,6 @@
       }, 150);
     }
 
-    // GESTIÓN DE HISTORIAL
     function saveHistory() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
@@ -668,7 +684,6 @@
 
       inputArea.value = '';
 
-      // COMANDO SECRETO
       if (text.toLowerCase() === '/sigint' || text.toLowerCase() === '/radio') {
         sigintActive = !sigintActive;
 
@@ -679,7 +694,7 @@
           sigBox.style.display = 'flex';
           statusEl.classList.add('sigint-active');
           statusEl.innerHTML = '<span class="dot"></span> FREQUENCY INTERCEPT ACTIVE';
-          appendMsg('ai', ' **[TRANSMISIÓN BÉLICA INTERCEPTADA]** Frecuencia de radio táctica establecida, módulo 1 sin señal, módulo 2 sin señal, módulo 3 sin señal, limpiar memoria', 'WAR FREQUENCY');
+          appendMsg('ai', ' **[TRANSMISIÓN BÉLICA INTERCEPTADA]** Frecuencia de radio táctica establecida, módulo 1 sin señal, módulo 2 sin señal, módulo 3 estable', 'WAR FREQUENCY');
         } else {
           window.speechSynthesis.cancel();
           stopWarRadioAtmosphere();
@@ -693,7 +708,6 @@
 
       appendMsg('user', text);
 
-      // GENERACIÓN DE IMAGEN
       if (text.toLowerCase().startsWith('/img ') || text.toLowerCase().startsWith('/imagen ')) {
         const promptImagen = text.replace(/^\/(img|imagen)\s+/i, '');
         const loaderId = showLoader();
@@ -731,7 +745,6 @@
         return;
       }
 
-      // PETICIÓN DE TEXTO
       const loaderId = showLoader();
 
       try {
