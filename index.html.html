@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PaketeAI</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+--bg:#17130f;--panel:#211b16;--panel2:#292119;
+--beige:#f2e6d0;--muted:#b9aa94;--orange:#e87924;
+--border:#3a3026;--user:#3b291c
+}
+body{font-family:Arial,sans-serif;background:var(--bg);color:var(--beige);height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}
+.sidebar{width:260px;background:#120f0c;border-right:1px solid var(--border);padding:18px;display:flex;flex-direction:column}
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:25px}
+.logoIcon{width:43px;height:43px;border-radius:12px;background:var(--orange);color:#17130f;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:bold}
+.logoText{font-size:21px;font-weight:bold}
+.newChat{border:1px solid var(--border);background:var(--panel);color:var(--beige);padding:12px;border-radius:10px;cursor:pointer;text-align:left}
+.newChat:hover{border-color:var(--orange)}
+.sidebarSection{margin-top:28px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.status{margin-top:auto;border-top:1px solid var(--border);padding-top:16px;color:#8f8475;font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#777;margin-right:6px}
+.dot.ok{background:#6fbd65}
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.header{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.model{font-size:11px;color:var(--muted)}
+.chat{flex:1;overflow-y:auto;padding:28px 7%}
+.welcome{max-width:760px;margin:12vh auto;text-align:center}
+.welcome h1{font-size:35px;margin-bottom:12px}
+.welcome h1 span{color:var(--orange)}
+.welcome p{color:var(--muted);line-height:1.6;margin-bottom:28px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+.card{border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:14px;cursor:pointer}
+.card:hover{border-color:var(--orange)}
+.card small{display:block;color:var(--muted);margin-top:5px}
+.message{display:flex;max-width:900px;margin:0 auto 22px;gap:12px}
+.avatar{width:32px;height:32px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold}
+.user .avatar{background:#5a3c25}
+.ai .avatar{background:var(--orange);color:#17130f}
+.bubble{max-width:calc(100% - 44px);line-height:1.65;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
+.user .bubble{background:var(--user);border:1px solid #503520;padding:12px 15px;border-radius:13px}
+.ai .bubble{padding:3px 0}
+.inputArea{padding:15px 7% 20px;border-top:1px solid var(--border)}
+.inputBox{max-width:900px;margin:auto;border:1px solid var(--border);background:var(--panel);border-radius:15px;display:flex;align-items:flex-end;padding:10px}
+.inputBox:focus-within{border-color:var(--orange)}
+textarea{flex:1;resize:none;background:none;border:0;outline:0;color:var(--beige);font-family:inherit;font-size:14px;line-height:1.5;max-height:150px;padding:4px 8px}
+textarea::placeholder{color:#766c60}
+.send{width:40px;height:40px;border:0;border-radius:10px;background:var(--orange);cursor:pointer;font-weight:bold}
+.send:hover{background:#f28a32}
+.send:disabled{opacity:.5}
+.bottom{text-align:center;color:#6f665c;font-size:10px;margin-top:7px}
+.loader{position:fixed;inset:0;background:#120f0c;display:flex;align-items:center;justify-content:center;z-index:10}
+.loaderBox{width:min(500px,90%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:28px}
+.loaderBox h2{margin-bottom:10px}
+.loaderBox p{color:var(--muted);font-size:13px;line-height:1.6}
+.key{width:100%;margin-top:18px;background:#120f0c;color:var(--beige);border:1px solid var(--border);border-radius:9px;padding:12px;outline:none}
+.key:focus{border-color:var(--orange)}
+.start{margin-top:10px;width:100%;padding:12px;border:0;border-radius:9px;background:var(--orange);font-weight:bold;cursor:pointer}
+.start:hover{background:#f28a32}
+.hidden{display:none}
+@media(max-width:700px){.sidebar{display:none}.chat{padding:20px 16px}.inputArea{padding:12px}.cards{grid-template-columns:1fr}.welcome{margin-top:7vh}.welcome h1{font-size:29px}}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar">
+
+<div class="logo">
+<div class="logoIcon">P</div>
+<div class="logoText">PaketeAI</div>
+</div>
+
+<button class="newChat" onclick="nuevo()">＋ Nueva conversación</button>
+
+<div class="sidebarSection">Motor</div>
+
+<div style="margin-top:10px;color:#b9aa94;font-size:12px;line-height:1.6">
+PaketeAI IA Lista (Conexión optimizada).
+</div>
+
+<div class="status">
+<span id="dot" class="dot"></span>
+<span id="status">Esperando usuario</span>
+</div>
+
+</aside>
+
+<main class="main">
+
+<header class="header">
+<div><b>PaketeAI 3.1</b></div>
+<div class="model">IA Integrada</div>
+</header>
+
+<section class="chat" id="chat">
+
+<div class="welcome" id="welcome">
+
+<h1>Hola, soy <span>PaketeAI</span></h1>
+
+<p>
+Una versión ligera de PaketeAI conectada directamente a inteligencia artificial sin necesidad de API Key.
+</p>
+
+<div class="cards">
+
+<div class="card" onclick="ejemplo('Explícame de forma sencilla qué es la inteligencia artificial.')">
+💡 Explicar algo
+<small>Obtén una explicación clara</small>
+</div>
+
+<div class="card" onclick="ejemplo('Resuelve paso a paso: 25% de 480.')">
+🧮 Resolver
+<small>Matemáticas y problemas</small>
+</div>
+
+<div class="card" onclick="ejemplo('Resume la Revolución Francesa.')">
+📚 Resumir
+<small>Resume información</small>
+</div>
+
+<div class="card" onclick="ejemplo('Escribe un texto formal sobre la importancia de cuidar el medio ambiente.')">
+✍️ Escribir
+<small>Genera textos</small>
+</div>
+
+</div>
+</div>
+
+</section>
+
+<div class="inputArea">
+
+<div class="inputBox">
+
+<textarea id="input"
+rows="1"
+placeholder="Escribe un mensaje..."
+onkeydown="tecla(event)"
+oninput="alto(this)"></textarea>
+
+<button class="send" id="send" onclick="enviar()">➤</button>
+
+</div>
+
+<div class="bottom">
+PaketeAI · Listo para usar
+</div>
+
+</div>
+
+</main>
+</div>
+
+
+<!-- CONFIGURACIÓN DE USUARIO -->
+
+<div class="loader" id="loader">
+
+<div class="loaderBox">
+
+<h2>Acceso a PaketeAI</h2>
+
+<p>
+Ingresa tu nombre de usuario o correo electrónico para iniciar sesión:
+</p>
+
+<input
+class="key"
+id="user_id"
+type="text"
+placeholder="Ej: usuario123 o correo@gmail.com">
+
+<button class="start" onclick="iniciar()">
+Iniciar PaketeAI
+</button>
+
+<p style="margin-top:12px;font-size:11px">
+No se requiere ninguna clave API. Tu usuario se guarda en este navegador.
+</p>
+
+</div>
+
+</div>
+
+
+<script>
+
+const USER_STORAGE = "pakete_user_id";
+const CHAT_STORAGE = "pakete_chat";
+
+let mensajes = [];
+
+try {
+  mensajes = JSON.parse(localStorage.getItem(CHAT_STORAGE) || "[]");
+} catch {
+  mensajes = [];
+}
+
+function iniciar() {
+  let user = document.getElementById("user_id").value.trim();
+  if (!user) {
+    alert("Por favor ingresa tu nombre de usuario o correo.");
+    return;
+  }
+  localStorage.setItem(USER_STORAGE, user);
+  document.getElementById("loader").classList.add("hidden");
+  document.getElementById("dot").classList.add("ok");
+  document.getElementById("status").textContent = "Usuario: " + user;
+  restaurar();
+}
+
+async function enviar() {
+  let input = document.getElementById("input");
+  let texto = input.value.trim();
+  if (!texto) return;
+
+  input.value = "";
+  alto(input);
+
+  agregar("user", texto);
+  mensajes.push({ role: "user", text: texto });
+  guardar();
+
+  let typing = agregar("ai", "Pensando...");
+
+  let promptCompleto = "Instrucción: Eres PaketeAI, un asistente en español claro y conciso.\n\n";
+  let ultimos = mensajes.slice(-6);
+  for (let m of ultimos) {
+    promptCompleto += (m.role === "user" ? "Usuario: " : "PaketeAI: ") + m.text + "\n";
+  }
+
+  try {
+    let respuestaText = "";
+    
+    // Método 1: GET directo con URL encode (evita preflight OPTIONS / bloqueos CORS de archivo local)
+    const seed = Math.floor(Math.random() * 1000000);
+    const urlGET = "https://text.pollinations.ai/" + encodeURIComponent(promptCompleto) + "?seed=" + seed + "&system=" + encodeURIComponent("Eres PaketeAI, un asistente útil en español.");
+
+    try {
+      let res = await fetch(urlGET);
+      if (res.ok) {
+        respuestaText = await res.text();
+      }
+    } catch (e) {
+      console.warn("Intento GET falló:", e);
+    }
+
+    // Método 2: POST de respaldo
+    if (!respuestaText || respuestaText.includes("Error")) {
+      let resPost = await fetch("https://text.pollinations.ai/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: "Eres PaketeAI, un asistente amigable en español." },
+            ...ultimos.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }))
+          ]
+        })
+      });
+
+      if (resPost.ok) {
+        let raw = await resPost.text();
+        try {
+          let parsed = JSON.parse(raw);
+          respuestaText = parsed.choices?.[0]?.message?.content || parsed.text || raw;
+        } catch {
+          respuestaText = raw;
+        }
+      }
+    }
+
+    if (!respuestaText || respuestaText.trim() === "") {
+      throw new Error("No se pudo obtener respuesta del servidor.");
+    }
+
+    typing.remove();
+    let finalClean = respuestaText.trim();
+    agregar("ai", finalClean);
+    mensajes.push({ role: "ai", text: finalClean });
+    guardar();
+
+  } catch (error) {
+    typing.remove();
+    agregar(
+      "ai",
+      "⚠️ Ocurrió un inconveniente al conectar con el motor.\n\n" +
+      "Detalle: " + error.message + "\n\n" +
+      "Sugerencia: Si abres el archivo directamente con doble clic (`file://`), el navegador puede bloquear ciertas peticiones por seguridad. Prueba abrirlo o reintentar el envío."
+    );
+  }
+}
+
+function agregar(tipo, texto) {
+  let chat = document.getElementById("chat");
+  if (document.getElementById("welcome"))
+    document.getElementById("welcome").style.display = "none";
+
+  let div = document.createElement("div");
+  div.className = "message " + tipo;
+
+  let avatar = tipo === "user" ? "TÚ" : "P";
+  let bubble = tipo === "user" ? escapeHTML(texto) : formatear(texto);
+
+  div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble">${bubble}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+
+  return div;
+}
+
+function formatear(texto) {
+  let x = escapeHTML(texto);
+  x = x.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  x = x.replace(/`([^`]+)`/g, "<code>$1</code>");
+  return x;
+}
+
+function escapeHTML(x) {
+  return String(x)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function guardar() {
+  localStorage.setItem(CHAT_STORAGE, JSON.stringify(mensajes.slice(-30)));
+}
+
+function restaurar() {
+  for (let m of mensajes) {
+    agregar(m.role === "user" ? "user" : "ai", m.text);
+  }
+}
+
+function nuevo() {
+  mensajes = [];
+  localStorage.removeItem(CHAT_STORAGE);
+  document.getElementById("chat").innerHTML = `
+<div class="welcome" id="welcome">
+<h1>Hola, soy <span>PaketeAI</span></h1>
+<p>Una versión ligera de PaketeAI conectada directamente a inteligencia artificial sin necesidad de API Key.</p>
+<div class="cards">
+<div class="card" onclick="ejemplo('Explícame qué es la inteligencia artificial.')">💡 Explicar algo<small>Obtén una explicación clara</small></div>
+<div class="card" onclick="ejemplo('Resuelve paso a paso: 25% de 480.')">🧮 Resolver<small>Matemáticas y problemas</small></div>
+<div class="card" onclick="ejemplo('Resume la Revolución Francesa.')">📚 Resumir<small>Resume información</small></div>
+<div class="card" onclick="ejemplo('Escribe un texto formal sobre el medio ambiente.')">✍️ Escribir<small>Genera textos</small></div>
+</div>
+</div>`;
+}
+
+function ejemplo(t) {
+  let input = document.getElementById("input");
+  input.value = t;
+  input.focus();
+  alto(input);
+}
+
+function tecla(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    enviar();
+  }
+}
+
+function alto(x) {
+  x.style.height = "auto";
+  x.style.height = Math.min(x.scrollHeight, 150) + "px";
+}
+
+window.addEventListener("load", () => {
+  let saved = localStorage.getItem(USER_STORAGE);
+  if (saved) {
+    document.getElementById("user_id").value = saved;
+    document.getElementById("loader").classList.add("hidden");
+    document.getElementById("dot").classList.add("ok");
+    document.getElementById("status").textContent = "Usuario: " + saved;
+    restaurar();
+  }
+});
+
+</script>
+
+</body>
+</html>
