@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PaketeAI 4.0</title>
+  <title>PaketeAI 5.0 - Multimodal</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://js.puter.com/v2/"></script>
   
   <style>
     :root {
@@ -14,7 +13,6 @@
       --bg-dark-2: #161a24;
       --panel-bg: rgba(22, 26, 36, 0.85);
       --beige-light: #f4eee0;
-      --beige-card: #e8dfcc;
       --text-dark: #12141a;
       --text-muted: #9a9eab;
       --orange: #ff6b2b;
@@ -39,7 +37,6 @@
       overflow: hidden;
     }
 
-    /* ENCABEZADO */
     header {
       background: var(--panel-bg);
       backdrop-filter: blur(10px);
@@ -73,7 +70,6 @@
     .brand-title {
       font-size: 1.15rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
       color: var(--beige-light);
     }
 
@@ -91,11 +87,6 @@
       background: #34d399;
       border-radius: 50%;
       box-shadow: 0 0 8px #34d399;
-    }
-
-    .actions {
-      display: flex;
-      gap: 8px;
     }
 
     .btn-icon {
@@ -118,7 +109,6 @@
       background: rgba(255, 107, 43, 0.1);
     }
 
-    /* ÁREA DE CONVERSACIÓN */
     #chat-box {
       flex: 1;
       overflow-y: auto;
@@ -190,27 +180,12 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .msg-bubble p {
-      margin-bottom: 8px;
-    }
-
-    .msg-bubble p:last-child {
-      margin-bottom: 0;
-    }
-
-    .msg-bubble pre {
-      background: #0d1017;
-      padding: 12px;
-      border-radius: 8px;
-      overflow-x: auto;
-      margin: 10px 0;
+    .msg-bubble img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 8px;
       border: 1px solid var(--border);
-    }
-
-    .msg-bubble code {
-      font-family: monospace;
-      font-size: 0.85rem;
-      color: var(--orange);
+      display: block;
     }
 
     .msg-meta {
@@ -218,11 +193,6 @@
       color: var(--text-muted);
     }
 
-    .user .msg-meta {
-      text-align: right;
-    }
-
-    /* BOTONES DE SUGERENCIA */
     .chips-wrapper {
       display: flex;
       gap: 8px;
@@ -248,7 +218,6 @@
       background: rgba(255, 107, 43, 0.1);
     }
 
-    /* ENTRADA DE TEXTO */
     footer {
       background: var(--panel-bg);
       backdrop-filter: blur(10px);
@@ -264,7 +233,6 @@
       border-radius: 12px;
       padding: 8px 12px;
       align-items: flex-end;
-      transition: border 0.2s;
     }
 
     .input-container:focus-within {
@@ -299,18 +267,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s, transform 0.1s;
+      transition: background 0.2s;
     }
 
     .btn-send:hover {
       background: var(--orange-hover);
     }
 
-    .btn-send:active {
-      transform: scale(0.95);
-    }
-
-    /* ANIMACIÓN CARGANDO */
     .dots-loader {
       display: flex;
       gap: 4px;
@@ -340,8 +303,8 @@
     <div class="brand">
       <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
       <div>
-        <div class="brand-title">PaketeAI</div>
-        <div class="status"><span class="dot"></span> Modo Rápido Activo</div>
+        <div class="brand-title">PaketeAI 5.0</div>
+        <div class="status"><span class="dot"></span> Texto + Imágenes + Archivos</div>
       </div>
     </div>
     <div class="actions">
@@ -354,21 +317,27 @@
       <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
       <div class="msg-content">
         <div class="msg-bubble">
-          ¡Diseño actualizado! Respuesta ultra rápida lista. ¿En qué trabajamos hoy?
+          ¡Hola! Puedes escribirme texto, usar el botón de 📌 para adjuntar archivos de código/texto o escribir `/img` antes de una descripción para generar imágenes.
         </div>
       </div>
     </div>
   </main>
 
   <div class="chips-wrapper">
-    <div class="chip" onclick="quickSend('Resumen rápido sobre la fotosíntesis')">🌿 Resumen escolar</div>
-    <div class="chip" onclick="quickSend('Escribe una función simple en JavaScript')">💻 Ejemplo de código</div>
-    <div class="chip" onclick="quickSend('Dame 3 consejos de productividad')">⚡ Consejos rápidos</div>
+    <div class="chip" onclick="quickSend('/img un gato astronauta en el espacio exterior en arte digital')">🎨 Dibuja un gato astronauta</div>
+    <div class="chip" onclick="quickSend('Resumen de la Segunda Guerra Mundial en 3 puntos')">📜 Resumen rápido</div>
+    <div class="chip" onclick="quickSend('Escribe un script simple en Python')">💻 Código Python</div>
   </div>
 
   <footer>
     <div class="input-container">
-      <textarea id="user-input" placeholder="Escribe un mensaje..." rows="1" onkeydown="handleKey(event)"></textarea>
+      <input type="file" id="file-selector" style="display:none" onchange="procesarArchivo(event)">
+      <button class="btn-icon" onclick="document.getElementById('file-selector').click()" title="Adjuntar archivo de texto o código">
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+      
+      <textarea id="user-input" placeholder="Escribe un mensaje o `/img` para imágenes..." rows="1" onkeydown="handleKey(event)"></textarea>
+      
       <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </footer>
@@ -404,6 +373,14 @@
       inputArea.value = '';
       appendMsg('user', text);
 
+      // DETECCIÓN DE GENERACIÓN DE IMAGEN
+      if (text.toLowerCase().startsWith('/img ') || text.toLowerCase().startsWith('/imagen ')) {
+        const promptImagen = text.replace(/^\/(img|imagen)\s+/i, '');
+        generarImagen(promptImagen);
+        return;
+      }
+
+      // PROCESAMIENTO DE TEXTO NORMAL
       const loaderId = showLoader();
 
       try {
@@ -412,55 +389,75 @@
         appendMsg('ai', response.content, response.source);
       } catch (err) {
         removeLoader(loaderId);
-        appendMsg('ai', '⚠️ No se pudo obtener respuesta rápida. Revisa tu conexión e inténtalo de nuevo.');
+        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Inténtalo nuevamente.');
       }
     }
 
-    // ESTRATEGIA DE RESPUESTA RÁPIDA (Optimizada)
+    // FUNCIÓN PARA GENERAR IMÁGENES
+    function generarImagen(prompt) {
+      const loaderId = showLoader();
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+      
+      const img = new Image();
+      img.onload = () => {
+        removeLoader(loaderId);
+        const content = `Aquí tienes la imagen generada para: **${prompt}**<br><img src="${imageUrl}" alt="${prompt}">`;
+        appendMsg('ai', content, 'Generador de Imágenes');
+      };
+
+      img.onerror = () => {
+        removeLoader(loaderId);
+        appendMsg('ai', '⚠️ Error al generar la imagen. Inténtalo de nuevo.');
+      };
+
+      img.src = imageUrl;
+    }
+
+    // FUNCIÓN PARA ADJUNTAR Y LEER ARCHIVOS LOCALE
+    function procesarArchivo(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const contenido = e.target.result;
+        inputArea.value = `Analiza el contenido del archivo "${file.name}":\n\n${contenido}`;
+      };
+
+      reader.readAsText(file);
+      event.target.value = ''; // Resetear input
+    }
+
+    // MULTI-RUTA CON BYPASS DE PROXIES
     async function fetchFastAI(prompt) {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 4000); // 4 segundos máx por intento
+      const encoded = encodeURIComponent(prompt);
+      const directTarget = `https://text.pollinations.ai/${encoded}?model=openai`;
 
-      // 1. Vía Ultra-Rápida: Pollinations GET Directo
-      try {
-        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`, {
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-        if (res.ok) {
-          const txt = await res.text();
-          if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
-            return { content: txt.trim(), source: 'Pakete Fast-Cloud' };
-          }
-        }
-      } catch (e) {}
+      const routes = [
+        { name: 'Ruta Directa', url: directTarget },
+        { name: 'Proxy Seguro 1', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(directTarget)}` },
+        { name: 'Proxy Seguro 2', url: `https://corsproxy.io/?${encodeURIComponent(directTarget)}` },
+        { name: 'Ruta Alternativa', url: `https://text.pollinations.ai/${encoded}?model=mistral` }
+      ];
 
-      // 2. Vía Puter AI
-      if (typeof puter !== 'undefined' && puter.ai) {
+      for (const route of routes) {
         try {
-          const res = await puter.ai.chat(prompt);
-          let txt = typeof res === 'string' ? res : (res?.message?.content || res?.text);
-          if (txt && txt.trim()) return { content: txt.trim(), source: 'Puter Engine' };
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 6000);
+
+          const res = await fetch(route.url, { signal: controller.signal });
+          clearTimeout(timeout);
+
+          if (res.ok) {
+            const txt = await res.text();
+            if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>') && !txt.includes('Access Denied')) {
+              return { content: txt.trim(), source: route.name };
+            }
+          }
         } catch (e) {}
       }
 
-      // 3. Respaldo POST
-      try {
-        const res = await fetch('https://text.pollinations.ai/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [{ role: 'user', content: prompt }],
-            model: 'openai'
-          })
-        });
-        if (res.ok) {
-          const txt = await res.text();
-          if (txt && txt.trim()) return { content: txt.trim(), source: 'Cloud Fallback' };
-        }
-      } catch (e) {}
-
-      throw new Error('Timeout o falla de red');
+      throw new Error('Bloqueo total de red');
     }
 
     function appendMsg(role, text, source = '') {
@@ -468,7 +465,7 @@
       row.className = `msg-row ${role}`;
 
       const avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
-      const parsed = role === 'ai' ? parseText(text) : String(text || '');
+      const parsed = role === 'ai' && !text.includes('<img') ? parseText(text) : text;
 
       row.innerHTML = `
         <div class="msg-avatar">${avatar}</div>
