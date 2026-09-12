@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PaketeAI 6.0 Engine</title>
+  <title>PaketeAI 7.0 Ultra Engine</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- LIBRERÍA DE CONEXIÓN IA SIN CORS NI REGISTRO -->
+  <!-- LIBRERÍA DE CONEXIÓN IA -->
   <script src="https://js.puter.com/v2/"></script>
   
   <style>
@@ -320,8 +320,8 @@
     <div class="brand">
       <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
       <div>
-        <div class="brand-title">PaketeAI 6.0 Engine</div>
-        <div class="status"><span class="dot"></span> Conexión estable activada</div>
+        <div class="brand-title">PaketeAI 7.0 Ultra</div>
+        <div class="status"><span class="dot"></span> Motor de Texto e Imágenes Conectado</div>
       </div>
     </div>
     <div class="actions">
@@ -334,16 +334,16 @@
       <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
       <div class="msg-content">
         <div class="msg-bubble">
-          ¡Hola! Sistema actualizado con motor Puter AI. Puedes realizar preguntas, adjuntar archivos con 📎 o escribir `/img` para crear imágenes.
+          ¡Hola! Sistema completamente operacional. Escribe cualquier duda, adjunta un archivo con 📎 o escribe `/img` para generar imágenes de alta definición.
         </div>
       </div>
     </div>
   </main>
 
   <div class="chips-wrapper">
-    <div class="chip" onclick="quickSend('/img un paisaje cyberpunk con luces de neón')">🎨 Dibuja un paisaje cyberpunk</div>
-    <div class="chip" onclick="quickSend('Explicación rápida sobre el ciclo del agua')">💧 Explicación rápida</div>
-    <div class="chip" onclick="quickSend('Escribe una función de JavaScript para ordenar una lista')">💻 Código JavaScript</div>
+    <div class="chip" onclick="quickSend('/img un gato astronauta flotando en el espacio realista')">🎨 Gato astronauta</div>
+    <div class="chip" onclick="quickSend('Resumen del sistema solar en 3 puntos')">🌌 Sistema solar</div>
+    <div class="chip" onclick="quickSend('Crea una función en Python para calcular el factorial')">💻 Código Python</div>
   </div>
 
   <footer>
@@ -353,7 +353,7 @@
         <i class="fa-solid fa-paperclip"></i>
       </button>
 
-      <textarea id="user-input" placeholder="Escribe un mensaje o `/img` para generar imágenes..." rows="1" onkeydown="handleKey(event)"></textarea>
+      <textarea id="user-input" placeholder="Escribe tu consulta o `/img` para imágenes..." rows="1" onkeydown="handleKey(event)"></textarea>
       <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </footer>
@@ -394,24 +394,44 @@
         const promptImagen = text.replace(/^\/(img|imagen)\s+/i, '');
         const loaderId = showLoader();
 
+        let finalSrc = '';
+        let engineName = 'Pakete Image Engine';
+
+        // Intentar Puter si está disponible
         try {
-          if (window.puter && window.puter.ai && window.puter.ai.txt2img) {
-            const imgElement = await puter.ai.txt2img(promptImagen);
-            removeLoader(loaderId);
-            appendMsg('ai', `Imagen generada para: **${promptImagen}**<br><img src="${imgElement.src}" style="max-width:100%; border-radius:10px; margin-top:8px;" alt="${promptImagen}">`, 'Puter AI Image');
-          } else {
-            const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptImagen)}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
-            removeLoader(loaderId);
-            appendMsg('ai', `Imagen generada para: **${promptImagen}**<br><img src="${imgUrl}" style="max-width:100%; border-radius:10px; margin-top:8px;" alt="${promptImagen}">`, 'Pollinations Engine');
+          if (window.puter && window.puter.ai && typeof window.puter.ai.txt2img === 'function') {
+            const resImg = await puter.ai.txt2img(promptImagen, { testMode: true });
+            if (resImg && resImg.src) {
+              finalSrc = resImg.src;
+              engineName = 'Puter Engine';
+            }
           }
-        } catch (e) {
-          removeLoader(loaderId);
-          appendMsg('ai', '⚠️ Error al generar la imagen. Inténtalo de nuevo.');
+        } catch(e) {
+          // Si falla Puter, el flujo continúa sin interrupción al generador directo
         }
+
+        // Si Puter no devolvió URL, usar el motor dinámico sin restricciones CORS
+        if (!finalSrc) {
+          const seed = Math.floor(Math.random() * 999999);
+          finalSrc = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptImagen)}?nologo=true&seed=${seed}`;
+          engineName = 'Fast Pollinations Engine';
+        }
+
+        removeLoader(loaderId);
+
+        const imgHtml = `
+          Imagen generada para: **${promptImagen}**<br>
+          <img src="${finalSrc}" 
+               style="max-width:100%; border-radius:10px; margin-top:8px; display:block; min-height:150px; background:rgba(0,0,0,0.2);" 
+               alt="${promptImagen}"
+               onerror="this.onerror=null; this.src='https://image.pollinations.ai/prompt/${encodeURIComponent(promptImagen)}?nologo=true';">
+        `;
+
+        appendMsg('ai', imgHtml, engineName);
         return;
       }
 
-      // PETICIÓN DE TEXTO MEDIANTE PUTER.JS
+      // PETICIÓN DE TEXTO
       const loaderId = showLoader();
 
       try {
@@ -420,11 +440,11 @@
         appendMsg('ai', response.content, response.source);
       } catch (err) {
         removeLoader(loaderId);
-        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Verifica tu conexión de red.');
+        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Revisa tu conexión.');
       }
     }
 
-    // PROCESAMIENTO DE ARCHIVOS LOCALES
+    // ADJUNTAR Y LEER ARCHIVOS LOCALES
     function procesarArchivo(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -438,20 +458,20 @@
       event.target.value = '';
     }
 
-    // MOTOR PRINCIPAL CON FALLBACK MULTIDOMINIO
+    // OBTENER RESPUESTA DE TEXTO
     async function fetchFastAI(prompt) {
-      // Intento 1: Puter.js (Sin problemas de CORS ni API Keys)
+      // 1. Puter.js
       if (window.puter && window.puter.ai) {
         try {
           const res = await puter.ai.chat(prompt);
           const txt = typeof res === 'object' ? (res.toString() || JSON.stringify(res)) : String(res);
           if (txt && txt.trim()) {
-            return { content: txt.trim(), source: 'Puter Core Engine' };
+            return { content: txt.trim(), source: 'Puter AI Core' };
           }
         } catch (e) {}
       }
 
-      // Intento 2: Fetch Pollinations directo
+      // 2. Pollinations Direct Fetch
       try {
         const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
         if (res.ok) {
@@ -462,7 +482,7 @@
         }
       } catch (e) {}
 
-      throw new Error('Fallo total de red');
+      throw new Error('Sin conexión');
     }
 
     function appendMsg(role, text, source = '') {
