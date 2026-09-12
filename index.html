@@ -3,221 +3,227 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pakete-AI 4.0 | Asistente Inteligente</title>
-  <!-- Iconos -->
+  <title>PaketeAI 4.0</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Renderizador de Markdown -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <!-- Motor Principal Puter AI (Gratuito, sin API Key) -->
   <script src="https://js.puter.com/v2/"></script>
   
   <style>
     :root {
-      --bg-dark: #0f172a;
-      --bg-card: #1e293b;
-      --bg-input: #334155;
-      --primary: #f97316;
-      --primary-hover: #ea580c;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --user-msg: #f97316;
-      --ai-msg: #334155;
+      --bg-main: #0b0f19;
+      --bg-panel: #151c2c;
+      --bg-bubble-ai: #1e293b;
+      --bg-bubble-user: #2563eb;
+      --accent: #3b82f6;
+      --accent-hover: #1d4ed8;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border: #334155;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      height: 100vh;
       overflow: hidden;
     }
 
-    /* ENCABEZADO */
+    /* BARRA SUPERIOR */
     header {
-      background-color: var(--bg-card);
-      padding: 12px 20px;
+      background: var(--bg-panel);
+      padding: 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #334155;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      border-bottom: 1px solid var(--border);
     }
 
-    .logo-container {
+    .brand {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .logo-icon {
-      background: var(--primary);
+    .brand-icon {
+      background: var(--accent);
       color: white;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
 
-    .logo-text h1 {
-      font-size: 1.2rem;
+    .brand-title {
+      font-size: 1.1rem;
       font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
-    .status-badge {
+    .status {
       font-size: 0.75rem;
-      color: #4ade80;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      background-color: #4ade80;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #4ade80;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .btn-header {
-      background: transparent;
-      border: 1px solid #475569;
-      color: var(--text-main);
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.85rem;
+      color: #22c55e;
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background: #22c55e;
+      border-radius: 50%;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: all 0.2s;
     }
 
-    .btn-header:hover {
-      background-color: #334155;
-      border-color: var(--primary);
+    .btn-icon:hover {
+      color: var(--text-primary);
+      border-color: var(--accent);
+      background: var(--bg-bubble-ai);
     }
 
-    /* ÁREA DE CHAT */
-    main {
+    /* ÁREA DE CONVERSACIÓN */
+    #chat-box {
       flex: 1;
       overflow-y: auto;
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      scroll-behavior: smooth;
+      gap: 18px;
     }
 
-    .message {
+    .msg-row {
       display: flex;
       gap: 12px;
-      max-width: 85%;
-      animation: fadeIn 0.3s ease;
+      max-width: 82%;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .message.user {
+    .msg-row.user {
       align-self: flex-end;
       flex-direction: row-reverse;
     }
 
-    .avatar {
-      width: 36px;
-      height: 36px;
+    .msg-avatar {
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 0.85rem;
       flex-shrink: 0;
-      font-weight: bold;
     }
 
-    .user .avatar {
-      background-color: var(--primary);
+    .user .msg-avatar {
+      background: var(--accent);
       color: white;
     }
 
-    .ai .avatar {
-      background-color: #0284c7;
-      color: white;
+    .ai .msg-avatar {
+      background: #334155;
+      color: #38bdf8;
     }
 
-    .bubble {
-      padding: 14px 18px;
-      border-radius: 16px;
+    .msg-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 14px;
       font-size: 0.95rem;
       line-height: 1.5;
       word-break: break-word;
     }
 
-    .user .bubble {
-      background-color: var(--user-msg);
+    .user .msg-bubble {
+      background: var(--bg-bubble-user);
       color: white;
-      border-bottom-right-radius: 4px;
+      border-top-right-radius: 2px;
     }
 
-    .ai .bubble {
-      background-color: var(--ai-msg);
-      color: var(--text-main);
-      border-bottom-left-radius: 4px;
+    .ai .msg-bubble {
+      background: var(--bg-bubble-ai);
+      color: var(--text-primary);
+      border-top-left-radius: 2px;
+      border: 1px solid var(--border);
     }
 
-    .ai .bubble pre {
+    .msg-bubble p {
+      margin-bottom: 8px;
+    }
+
+    .msg-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    .msg-bubble pre {
       background: #0f172a;
-      padding: 12px;
-      border-radius: 8px;
+      padding: 10px;
+      border-radius: 6px;
       overflow-x: auto;
-      margin: 10px 0;
-      border: 1px solid #475569;
+      margin: 8px 0;
+      border: 1px solid var(--border);
     }
 
-    .ai .bubble code {
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.9rem;
+    .msg-bubble code {
+      font-family: monospace;
+      font-size: 0.85rem;
     }
 
-    .engine-tag {
+    .msg-meta {
       font-size: 0.7rem;
-      color: var(--text-muted);
-      margin-top: 4px;
+      color: var(--text-secondary);
+    }
+
+    .user .msg-meta {
       text-align: right;
     }
 
-    /* CHIPS DE SUGERENCIAS */
-    .suggestions {
+    /* BOTONES DE SUGERENCIA */
+    .chips-wrapper {
       display: flex;
       gap: 8px;
-      overflow-x: auto;
       padding: 0 20px 10px;
+      overflow-x: auto;
     }
 
     .chip {
-      background-color: var(--bg-card);
-      border: 1px solid #334155;
-      color: var(--text-muted);
-      padding: 6px 12px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.8rem;
       white-space: nowrap;
@@ -226,29 +232,29 @@
     }
 
     .chip:hover {
-      border-color: var(--primary);
-      color: var(--text-main);
-      background-color: #334155;
+      border-color: var(--accent);
+      color: var(--text-primary);
     }
 
-    /* CONTENEDOR DE ENTRADA */
+    /* ENTRADA DE TEXTO */
     footer {
-      background-color: var(--bg-card);
-      padding: 15px 20px;
-      border-top: 1px solid #334155;
+      background: var(--bg-panel);
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
     }
 
-    .input-box {
+    .input-container {
       display: flex;
       gap: 10px;
-      background-color: var(--bg-input);
-      padding: 8px 12px;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      border: 1px solid #475569;
+      padding: 8px 12px;
+      align-items: flex-end;
     }
 
-    .input-box:focus-within {
-      border-color: var(--primary);
+    .input-container:focus-within {
+      border-color: var(--accent);
     }
 
     textarea {
@@ -256,19 +262,19 @@
       background: transparent;
       border: none;
       outline: none;
-      color: var(--text-main);
+      color: var(--text-primary);
       font-size: 0.95rem;
       resize: none;
+      max-height: 100px;
       height: 24px;
-      max-height: 120px;
     }
 
     .btn-send {
-      background-color: var(--primary);
+      background: var(--accent);
       color: white;
       border: none;
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       border-radius: 8px;
       cursor: pointer;
       display: flex;
@@ -278,235 +284,125 @@
     }
 
     .btn-send:hover {
-      background-color: var(--primary-hover);
-    }
-
-    /* MODAL PERFIL/LOGIN */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-
-    .modal {
-      background: var(--bg-card);
-      padding: 24px;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 400px;
-      border: 1px solid #475569;
-    }
-
-    .modal h2 {
-      margin-bottom: 12px;
-      font-size: 1.3rem;
-    }
-
-    .modal input {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0 16px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: var(--bg-input);
-      color: white;
-    }
-
-    .modal-buttons {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
+      background: var(--accent-hover);
     }
 
     /* ANIMACIÓN CARGANDO */
-    .typing-indicator {
+    .dots-loader {
       display: flex;
       gap: 4px;
-      padding: 4px 8px;
+      padding: 4px;
     }
 
-    .typing-dot {
+    .dots-loader div {
       width: 6px;
       height: 6px;
-      background: #94a3b8;
+      background: var(--text-secondary);
       border-radius: 50%;
-      animation: bounce 1.4s infinite ease-in-out;
+      animation: pulse 1s infinite alternate;
     }
 
-    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    .dots-loader div:nth-child(2) { animation-delay: 0.2s; }
+    .dots-loader div:nth-child(3) { animation-delay: 0.4s; }
 
-    @keyframes bounce {
-      0%, 80%, 100% { transform: scale(0); }
-      40% { transform: scale(1); }
+    @keyframes pulse {
+      from { opacity: 0.3; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1.1); }
     }
   </style>
 </head>
 <body>
 
-  <!-- ENCABEZADO -->
   <header>
-    <div class="logo-container">
-      <div class="logo-icon"><i class="fa-solid fa-robot"></i></div>
-      <div class="logo-text">
-        <h1>Pakete-AI <span style="font-size: 0.7rem; color: var(--primary);">v4.0</span></h1>
-        <div class="status-badge"><span class="status-dot"></span> Motor Nube Conectado</div>
+    <div class="brand">
+      <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
+      <div>
+        <div class="brand-title">PaketeAI</div>
+        <div class="status"><span class="dot"></span> En línea</div>
       </div>
     </div>
-    <div class="header-actions">
-      <button class="btn-header" onclick="openLoginModal()" id="user-btn">
-        <i class="fa-solid fa-user"></i> <span id="username-display">Usuario</span>
-      </button>
-      <button class="btn-header" onclick="clearChat()">
-        <i class="fa-solid fa-trash"></i>
-      </button>
+    <div class="actions">
+      <button class="btn-icon" onclick="resetChat()" title="Borrar chat"><i class="fa-solid fa-trash"></i></button>
     </div>
   </header>
 
-  <!-- CHAT PRINCIPAL -->
-  <main id="chat-container">
-    <div class="message ai">
-      <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-      <div>
-        <div class="bubble">
-          ¡Hola! Soy **Pakete-AI**. Mi motor está conectado en la nube y listo para ayudarte sin depender de servidores locales. ¿En qué trabajamos hoy?
+  <main id="chat-box">
+    <div class="msg-row ai">
+      <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+      <div class="msg-content">
+        <div class="msg-bubble">
+          ¡Hola! Soy **PaketeAI**. Sistema restablecido y listo para responder. ¿Qué deseas consultar?
         </div>
       </div>
     </div>
   </main>
 
-  <!-- SUGERENCIAS -->
-  <div class="suggestions">
-    <div class="chip" onclick="useChip('Explícame de forma sencilla cómo funciona la IA')">💡 Explicar concepto</div>
-    <div class="chip" onclick="useChip('Escribe un código HTML y CSS para una tarjeta de presentación')">💻 Crear código</div>
-    <div class="chip" onclick="useChip('Resume las ideas principales sobre el cambio climático')">📝 Resumir texto</div>
-    <div class="chip" onclick="useChip('Dame 5 ideas para un proyecto educativo')">🚀 Generar ideas</div>
+  <div class="chips-wrapper">
+    <div class="chip" onclick="quickSend('Resumen sobre la Revolución Industrial')">📚 Resumen escolar</div>
+    <div class="chip" onclick="quickSend('Escribe un código HTML/CSS sencillo')">💻 Ejemplo de código</div>
+    <div class="chip" onclick="quickSend('Consejos para estudiar mejor')">🧠 Tips de estudio</div>
   </div>
 
-  <!-- ENTRADA DE TEXTO -->
   <footer>
-    <div class="input-box">
-      <textarea id="user-input" placeholder="Escribe tu mensaje aquí..." rows="1" onkeydown="handleKeyPress(event)"></textarea>
-      <button class="btn-send" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+    <div class="input-container">
+      <textarea id="user-input" placeholder="Escribe un mensaje..." rows="1" onkeydown="handleKey(event)"></textarea>
+      <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </footer>
 
-  <!-- MODAL DE USUARIO -->
-  <div class="modal-overlay" id="modal">
-    <div class="modal">
-      <h2>Perfil de Usuario</h2>
-      <p style="font-size: 0.85rem; color: var(--text-muted);">Ingresa tus datos para personalizar tu experiencia (guardado localmente).</p>
-      
-      <label style="font-size: 0.8rem; margin-top: 10px; display:block;">Nombre:</label>
-      <input type="text" id="input-name" placeholder="Tu nombre">
-
-      <label style="font-size: 0.8rem; display:block;">Correo de Google (Opcional):</label>
-      <input type="email" id="input-email" placeholder="usuario@gmail.com">
-
-      <div class="modal-buttons">
-        <button class="btn-header" onclick="closeLoginModal()">Cancelar</button>
-        <button class="btn-primary" onclick="saveProfile()">Guardar</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    let chatHistory = [];
-    let currentUser = localStorage.getItem('pakete_user') || 'Usuario';
+    const chatBox = document.getElementById('chat-box');
+    const inputArea = document.getElementById('user-input');
 
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById('username-display').innerText = currentUser;
-      loadHistory();
-    });
-
-    function handleKeyPress(e) {
+    function handleKey(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendMessage();
+        sendMsg();
       }
     }
 
-    function useChip(text) {
-      document.getElementById('user-input').value = text;
-      sendMessage();
+    function quickSend(text) {
+      inputArea.value = text;
+      sendMsg();
     }
 
-    async function sendMessage() {
-      const input = document.getElementById('user-input');
-      const text = input.value.trim();
+    function parseText(raw) {
+      if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
+        try { return marked.parse(raw); } catch(e) {}
+      }
+      return raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+    }
+
+    async function sendMsg() {
+      const text = inputArea.value.trim();
       if (!text) return;
 
-      input.value = '';
-      appendMessage('user', text);
+      inputArea.value = '';
+      appendMsg('user', text);
 
-      // Mostrar indicador de carga
-      const loadingId = appendLoading();
+      const loaderId = showLoader();
 
       try {
-        const response = await fetchAIResponse(text);
-        removeLoading(loadingId);
-        appendMessage('ai', response.text, response.engine);
+        const response = await fetchAI(text);
+        removeLoader(loaderId);
+        appendMsg('ai', response.content, response.source);
       } catch (err) {
-        removeLoading(loadingId);
-        appendMessage('ai', '⚠️ No se pudo conectar con el motor en este momento. Revisa tu conexión a internet e inténtalo de nuevo.');
+        removeLoader(loaderId);
+        appendMsg('ai', '⚠️ No se pudo obtener respuesta. Comprueba tu conexión e intenta de nuevo.');
       }
     }
 
-    // LÓGICA DEL MOTOR IA MULTI-SERVICIO
-    async function fetchAIResponse(prompt) {
-      // Intento 1: Puter.js Engine (Sin API Key, ejecutable directamente en el cliente)
-      if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
-        try {
-          const sysPrompt = "Eres Pakete-AI, un asistente de IA rápido, amable y conciso. Responde en español y usa formato Markdown cuando sea conveniente.";
-          const fullQuery = `${sysPrompt}\n\nPregunta: ${prompt}`;
-          const res = await puter.ai.chat(fullQuery);
-          
-          let outputText = "";
-          if (typeof res === 'string') outputText = res;
-          else if (res?.message?.content) outputText = res.message.content;
-          else if (res?.text) outputText = res.text;
-
-          if (outputText && outputText.trim().length > 0) {
-            return { text: outputText, engine: 'Motor Nube Puter AI' };
-          }
-        } catch (e) {
-          console.warn("Fallo Puter AI, cambiando a motor secundario...", e);
-        }
-      }
-
-      // Intento 2: Pollinations Cloud (Respaldo directo GET)
+    async function fetchAI(prompt) {
+      // Motor 1: Pollinations GET
       try {
-        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&seed=${Math.floor(Math.random()*10000)}`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`);
         if (res.ok) {
-          const text = await res.text();
-          if (text && text.trim().length > 0) {
-            return { text: text, engine: 'Motor Nube Pollinations' };
-          }
+          const txt = await res.text();
+          if (txt && txt.trim()) return { content: txt.trim(), source: 'Pollinations AI' };
         }
-      } catch (e) {
-        console.warn("Fallo motor secundario Pollinations GET", e);
-      }
+      } catch (e) {}
 
-      // Intento 3: Pollinations POST
+      // Motor 2: Pollinations POST
       try {
         const res = await fetch('https://text.pollinations.ai/', {
           method: 'POST',
@@ -517,107 +413,74 @@
           })
         });
         if (res.ok) {
-          const text = await res.text();
-          return { text: text, engine: 'Motor Nube Alternativo' };
+          const txt = await res.text();
+          if (txt && txt.trim()) return { content: txt.trim(), source: 'Cloud Engine' };
         }
-      } catch (e) {
-        console.error("Todos los motores fallaron", e);
+      } catch (e) {}
+
+      // Motor 3: Puter AI
+      if (typeof puter !== 'undefined' && puter.ai) {
+        try {
+          const res = await puter.ai.chat(prompt);
+          const txt = typeof res === 'string' ? res : (res?.message?.content || res?.text);
+          if (txt && txt.trim()) return { content: txt.trim(), source: 'Puter Engine' };
+        } catch (e) {}
       }
 
-      throw new Error("Sin respuesta del servicio");
+      throw new Error('Todos los motores fallaron.');
     }
 
-    function appendMessage(role, text, engine = '') {
-      const container = document.getElementById('chat-container');
-      const msgDiv = document.createElement('div');
-      msgDiv.className = `message ${role}`;
+    function appendMsg(role, text, source = '') {
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
 
-      const initial = role === 'user' ? currentUser.charAt(0).toUpperCase() : '<i class="fa-solid fa-robot"></i>';
-      const formattedText = role === 'ai' ? marked.parse(text) : text;
+      const avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+      const parsed = role === 'ai' ? parseText(text) : text;
 
-      msgDiv.innerHTML = `
-        <div class="avatar">${initial}</div>
-        <div>
-          <div class="bubble">${formattedText}</div>
-          ${engine ? `<div class="engine-tag"><i class="fa-solid fa-bolt"></i> ${engine}</div>` : ''}
+      row.innerHTML = `
+        <div class="msg-avatar">${avatar}</div>
+        <div class="msg-content">
+          <div class="msg-bubble">${parsed}</div>
+          ${source ? `<div class="msg-meta">${source}</div>` : ''}
         </div>
       `;
 
-      container.appendChild(msgDiv);
-      container.scrollTop = container.scrollHeight;
-
-      saveHistory();
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function appendLoading() {
-      const container = document.getElementById('chat-container');
-      const id = 'loading-' + Date.now();
-      const div = document.createElement('div');
-      div.className = 'message ai';
-      div.id = id;
-      div.innerHTML = `
-        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-        <div class="bubble">
-          <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
+    function showLoader() {
+      const id = 'loader-' + Date.now();
+      const row = document.createElement('div');
+      row.className = 'msg-row ai';
+      row.id = id;
+      row.innerHTML = `
+        <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="msg-content">
+          <div class="msg-bubble">
+            <div class="dots-loader"><div></div><div></div><div></div></div>
           </div>
         </div>
       `;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight;
       return id;
     }
 
-    function removeLoading(id) {
+    function removeLoader(id) {
       const el = document.getElementById(id);
       if (el) el.remove();
     }
 
-    function clearChat() {
-      if (confirm("¿Deseas borrar la conversación actual?")) {
-        document.getElementById('chat-container').innerHTML = `
-          <div class="message ai">
-            <div class="avatar"><i class="fa-solid fa-robot"></i></div>
-            <div class="bubble">Historial borrado. ¿En qué te puedo ayudar ahora?</div>
+    function resetChat() {
+      chatBox.innerHTML = `
+        <div class="msg-row ai">
+          <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="msg-content">
+            <div class="msg-bubble">Conversación reiniciada. ¿En qué puedo ayudarte?</div>
           </div>
-        `;
-        localStorage.removeItem('pakete_history');
-      }
-    }
-
-    function saveHistory() {
-      // Guarda hasta las últimas 20 interacciones
-      const container = document.getElementById('chat-container');
-      localStorage.setItem('pakete_history', container.innerHTML);
-    }
-
-    function loadHistory() {
-      const saved = localStorage.getItem('pakete_history');
-      if (saved) {
-        document.getElementById('chat-container').innerHTML = saved;
-      }
-    }
-
-    /* MANEJO DE MODAL */
-    function openLoginModal() {
-      document.getElementById('modal').style.display = 'flex';
-      document.getElementById('input-name').value = currentUser;
-    }
-
-    function closeLoginModal() {
-      document.getElementById('modal').style.display = 'none';
-    }
-
-    function saveProfile() {
-      const name = document.getElementById('input-name').value.trim();
-      if (name) {
-        currentUser = name;
-        localStorage.setItem('pakete_user', name);
-        document.getElementById('username-display').innerText = name;
-      }
-      closeLoginModal();
+        </div>
+      `;
     }
   </script>
 </body>
