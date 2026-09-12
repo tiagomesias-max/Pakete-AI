@@ -124,7 +124,7 @@
     .msg-row {
       display: flex;
       gap: 12px;
-      max-width: 82%;
+      max-width: 85%;
     }
 
     .msg-row.user {
@@ -331,7 +331,7 @@
       <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
       <div class="msg-content">
         <div class="msg-bubble">
-          ¡Hola! Soy **PaketeAI**. Sistema restablecido y listo para responder. ¿Qué deseas consultar?
+          ¡Hola! Soy **PaketeAI**. Sistema restablecido con sincronización garantizada. ¿En qué trabajamos hoy?
         </div>
       </div>
     </div>
@@ -367,10 +367,11 @@
     }
 
     function parseText(raw) {
+      const str = String(raw || '');
       if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-        try { return marked.parse(raw); } catch(e) {}
+        try { return marked.parse(str); } catch(e) {}
       }
-      return raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
     }
 
     async function sendMsg() {
@@ -388,17 +389,19 @@
         appendMsg('ai', response.content, response.source);
       } catch (err) {
         removeLoader(loaderId);
-        appendMsg('ai', '⚠️ No se pudo obtener respuesta. Comprueba tu conexión e intenta de nuevo.');
+        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Inténtalo de nuevo en unos segundos.');
       }
     }
 
     async function fetchAI(prompt) {
       // Motor 1: Pollinations GET
       try {
-        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`);
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&cache=${Date.now()}`);
         if (res.ok) {
           const txt = await res.text();
-          if (txt && txt.trim()) return { content: txt.trim(), source: 'Pollinations AI' };
+          if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
+            return { content: txt.trim(), source: 'Pollinations Cloud' };
+          }
         }
       } catch (e) {}
 
@@ -414,7 +417,9 @@
         });
         if (res.ok) {
           const txt = await res.text();
-          if (txt && txt.trim()) return { content: txt.trim(), source: 'Cloud Engine' };
+          if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
+            return { content: txt.trim(), source: 'Cloud Engine' };
+          }
         }
       } catch (e) {}
 
@@ -422,31 +427,39 @@
       if (typeof puter !== 'undefined' && puter.ai) {
         try {
           const res = await puter.ai.chat(prompt);
-          const txt = typeof res === 'string' ? res : (res?.message?.content || res?.text);
+          let txt = '';
+          if (typeof res === 'string') txt = res;
+          else if (res?.message?.content) txt = res.message.content;
+          else if (res?.text) txt = res.text;
+
           if (txt && txt.trim()) return { content: txt.trim(), source: 'Puter Engine' };
         } catch (e) {}
       }
 
-      throw new Error('Todos los motores fallaron.');
+      throw new Error('Todos los motores fallaron');
     }
 
     function appendMsg(role, text, source = '') {
-      const row = document.createElement('div');
-      row.className = `msg-row ${role}`;
+      try {
+        const row = document.createElement('div');
+        row.className = `msg-row ${role}`;
 
-      const avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
-      const parsed = role === 'ai' ? parseText(text) : text;
+        const avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+        const parsed = role === 'ai' ? parseText(text) : String(text || '');
 
-      row.innerHTML = `
-        <div class="msg-avatar">${avatar}</div>
-        <div class="msg-content">
-          <div class="msg-bubble">${parsed}</div>
-          ${source ? `<div class="msg-meta">${source}</div>` : ''}
-        </div>
-      `;
+        row.innerHTML = `
+          <div class="msg-avatar">${avatar}</div>
+          <div class="msg-content">
+            <div class="msg-bubble">${parsed}</div>
+            ${source ? `<div class="msg-meta">${source}</div>` : ''}
+          </div>
+        `;
 
-      chatBox.appendChild(row);
-      chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.appendChild(row);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } catch (e) {
+        console.error("Error mostrando mensaje:", e);
+      }
     }
 
     function showLoader() {
