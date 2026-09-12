@@ -356,7 +356,6 @@
       </div>
     </div>
     <div class="actions">
-      <!-- PANEL SIGINT SEGURO (SE ACTIVA SOLO POR COMANDO) -->
       <div id="sigint-container">
         <canvas id="sigint-canvas" width="90" height="20"></canvas>
       </div>
@@ -393,29 +392,142 @@
     let sigintActive = false;
     let audioCtx = null;
     let isAnimatingSigInt = false;
+    let radioNoiseNode = null;
+    let radioWhistleNode = null;
+    let radioNoiseGain = null;
 
-    // CARGAR HISTORIAL AL INICIAR
     window.addEventListener('DOMContentLoaded', () => {
       loadHistory();
       drawSigIntSpectrum(false);
     });
 
-    // MOTOR AUDIO Y VOZ MILITAR OCULTO (SIGINT)
     function initAudioContext() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
     }
 
-    function playRadioBeep(frequency = 1200, duration = 0.08) {
+    // GENERADOR DE CURVA DE DISTORSIÓN (VALVULAR/ANALOG)
+    function makeDistortionCurve(amount = 50) {
+      const k = typeof amount === 'number' ? amount : 50;
+      const n_samples = 44100;
+      const curve = new Float32Array(n_samples);
+      const deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i) {
+        const x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    // INICIAR RUIDO DE AMBIENTE Y DISTORSIÓN DE GUERRA EN TIEMPO REAL
+    function startWarRadioAtmosphere() {
+      initAudioContext();
+      stopWarRadioAtmosphere();
+
+      // 1. Ruido blanco / estática de fondo
+      const bufferSize = audioCtx.sampleRate * 2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+
+      radioNoiseNode = audioCtx.createBufferSource();
+      radioNoiseNode.buffer = buffer;
+      radioNoiseNode.loop = true;
+
+      // 2. Filtro de radio de guerra (recorte agresivo de frecuencias)
+      const bandpass = audioCtx.createBiquadFilter();
+      bandpass.type = 'bandpass';
+      bandpass.frequency.value = 1100;
+      bandpass.Q.value = 2.5;
+
+      // 3. Saturación
+      const distortion = audioCtx.createWaveShaper();
+      distortion.curve = makeDistortionCurve(120);
+      distortion.oversample = '4x';
+
+      // 4. Silbato de interferencia heterodina
+      radioWhistleNode = audioCtx.createOscillator();
+      const whistleGain = audioCtx.createGain();
+      radioWhistleNode.type = 'sawtooth';
+      radioWhistleNode.frequency.value = 2400; 
+      whistleGain.gain.value = 0.015;
+
+      // LFO para hacer oscilar la señal y dar la sensación de interferencia móvil
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      lfo.frequency.value = 0.4;
+      lfoGain.gain.value = 600;
+      lfo.connect(lfoGain);
+      lfoGain.connect(radioWhistleNode.frequency);
+      lfo.start();
+
+      radioNoiseGain = audioCtx.createGain();
+      radioNoiseGain.gain.value = 0.18;
+
+      // Conexión del grafo de audio
+      radioNoiseNode.connect(bandpass);
+      bandpass.connect(distortion);
+      distortion.connect(radioNoiseGain);
+
+      radioWhistleNode.connect(whistleGain);
+      whistleGain.connect(radioNoiseGain);
+
+      radioNoiseGain.connect(audioCtx.destination);
+
+      radioNoiseNode.start();
+      radioWhistleNode.start();
+
+      // Micro-cortes y chispazos aleatorios de señal
+      simulateSignalDropouts();
+    }
+
+    function simulateSignalDropouts() {
+      if (!isAnimatingSigInt || !radioNoiseGain) return;
+      
+      const delay = Math.random() * 800 + 300;
+      setTimeout(() => {
+        if (radioNoiseGain && isAnimatingSigInt) {
+          const dropType = Math.random();
+          if (dropType > 0.7) {
+            // Bajón repentino de señal
+            radioNoiseGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            radioNoiseGain.gain.exponentialRampToValueAtTime(0.2, audioCtx.currentTime + 0.2);
+          } else if (dropType < 0.2) {
+            // Estallido de interferencia
+            radioNoiseGain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+            radioNoiseGain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.15);
+          }
+          simulateSignalDropouts();
+        }
+      }, delay);
+    }
+
+    function stopWarRadioAtmosphere() {
+      if (radioNoiseNode) {
+        try { radioNoiseNode.stop(); } catch(e) {}
+        radioNoiseNode = null;
+      }
+      if (radioWhistleNode) {
+        try { radioWhistleNode.stop(); } catch(e) {}
+        radioWhistleNode = null;
+      }
+    }
+
+    function playRadioBeep(frequency = 1200, duration = 0.1) {
       initAudioContext();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
 
-      osc.type = 'sine';
+      osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
 
-      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
 
       osc.connect(gain);
@@ -425,35 +537,6 @@
       osc.stop(audioCtx.currentTime + duration);
     }
 
-    function playRadioStatic(duration = 0.2) {
-      initAudioContext();
-      const bufferSize = audioCtx.sampleRate * duration;
-      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-
-      const noise = audioCtx.createBufferSource();
-      noise.buffer = buffer;
-
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 1800;
-      filter.Q.value = 3.0;
-
-      const gain = audioCtx.createGain();
-      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-
-      noise.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      noise.start();
-    }
-
     function drawSigIntSpectrum(active = false) {
       const canvas = document.getElementById('sigint-canvas');
       if (!canvas) return;
@@ -461,7 +544,7 @@
       isAnimatingSigInt = active;
 
       function render() {
-        ctx.fillStyle = 'rgba(5, 10, 7, 0.3)';
+        ctx.fillStyle = 'rgba(5, 10, 7, 0.35)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.lineWidth = 1.5;
@@ -472,7 +555,7 @@
         let x = 0;
 
         for (let i = 0; i < 16; i++) {
-          const v = isAnimatingSigInt ? (Math.random() * 12 + 3) : 2;
+          const v = isAnimatingSigInt ? (Math.random() * 16 + 2) : 2;
           const y = (i % 2 === 0) ? (canvas.height / 2 + v / 2) : (canvas.height / 2 - v / 2);
 
           if (i === 0) ctx.moveTo(x, y);
@@ -505,24 +588,29 @@
       const cleanText = texto.replace(/<[^>]*>?/gm, '').replace(/`/g, '');
       window.speechSynthesis.cancel();
 
-      playRadioBeep(1400, 0.06);
-      setTimeout(() => playRadioStatic(0.15), 60);
+      startWarRadioAtmosphere();
+      playRadioBeep(1800, 0.12);
 
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.rate = 1.05;
-      utterance.pitch = 0.95;
+      utterance.rate = 0.92; // Tono más pausado y robótico de época
+      utterance.pitch = 0.75; // Voz grave/militar distorsionada
       utterance.lang = 'es-ES';
 
       utterance.onstart = () => drawSigIntSpectrum(true);
       utterance.onend = () => {
         drawSigIntSpectrum(false);
-        playRadioStatic(0.12);
-        setTimeout(() => playRadioBeep(800, 0.08), 100);
+        playRadioBeep(600, 0.15);
+        setTimeout(() => stopWarRadioAtmosphere(), 300);
+      };
+
+      utterance.onerror = () => {
+        drawSigIntSpectrum(false);
+        stopWarRadioAtmosphere();
       };
 
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
-      }, 200);
+      }, 150);
     }
 
     // GESTIÓN DE HISTORIAL
@@ -580,7 +668,7 @@
 
       inputArea.value = '';
 
-      // COMANDO SECRETO: `/sigint` o `/radio`
+      // COMANDO SECRETO
       if (text.toLowerCase() === '/sigint' || text.toLowerCase() === '/radio') {
         sigintActive = !sigintActive;
 
@@ -590,14 +678,15 @@
         if (sigintActive) {
           sigBox.style.display = 'flex';
           statusEl.classList.add('sigint-active');
-          statusEl.innerHTML = '<span class="dot"></span> SIGINT AUDIO PROTOCOL ACTIVE';
-          appendMsg('ai', '⚠️ **[PROTOCOLO SIGINT ACTIVADO]** Transmisión de voz cifrada y análisis de señales habilitados.', 'SIGINT SYSTEM');
+          statusEl.innerHTML = '<span class="dot"></span> FREQUENCY INTERCEPT ACTIVE';
+          appendMsg('ai', '⚠️ **[TRANSMISIÓN BÉLICA INTERCEPTADA]** Frecuencia de radio táctica establecida.', 'WAR FREQUENCY');
         } else {
           window.speechSynthesis.cancel();
+          stopWarRadioAtmosphere();
           sigBox.style.display = 'none';
           statusEl.classList.remove('sigint-active');
           statusEl.innerHTML = '<span class="dot"></span> Historial Local Guardado';
-          appendMsg('ai', 'Modo SIGINT desactivado. Canal encriptado cerrado.', 'SYSTEM');
+          appendMsg('ai', 'Canal de radio cerrado. Transmisión normal restaurada.', 'SYSTEM');
         }
         return;
       }
@@ -746,6 +835,7 @@
 
     function resetChat() {
       window.speechSynthesis.cancel();
+      stopWarRadioAtmosphere();
       chatHistory = [];
       localStorage.removeItem(STORAGE_KEY);
       chatBox.innerHTML = '';
