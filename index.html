@@ -1,393 +1,624 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PaketeAI</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pakete-AI 4.0 | Asistente Inteligente</title>
+  <!-- Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Renderizador de Markdown -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- Motor Principal Puter AI (Gratuito, sin API Key) -->
+  <script src="https://js.puter.com/v2/"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #334155;
+      --primary: #f97316;
+      --primary-hover: #ea580c;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --user-msg: #f97316;
+      --ai-msg: #334155;
+    }
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
---bg:#17130f;--panel:#211b16;--panel2:#292119;
---beige:#f2e6d0;--muted:#b9aa94;--orange:#e87924;
---border:#3a3026;--user:#3b291c
-}
-body{font-family:Arial,sans-serif;background:var(--bg);color:var(--beige);height:100vh;overflow:hidden}
-.app{display:flex;height:100vh}
-.sidebar{width:260px;background:#120f0c;border-right:1px solid var(--border);padding:18px;display:flex;flex-direction:column}
-.logo{display:flex;align-items:center;gap:12px;margin-bottom:25px}
-.logoIcon{width:43px;height:43px;border-radius:12px;background:var(--orange);color:#17130f;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:bold}
-.logoText{font-size:21px;font-weight:bold}
-.newChat{border:1px solid var(--border);background:var(--panel);color:var(--beige);padding:12px;border-radius:10px;cursor:pointer;text-align:left}
-.newChat:hover{border-color:var(--orange)}
-.sidebarSection{margin-top:28px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-.status{margin-top:auto;border-top:1px solid var(--border);padding-top:16px;color:#8f8475;font-size:12px}
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#777;margin-right:6px}
-.dot.ok{background:#6fbd65}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}
-.header{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px}
-.model{font-size:11px;color:var(--muted)}
-.chat{flex:1;overflow-y:auto;padding:28px 7%}
-.welcome{max-width:760px;margin:12vh auto;text-align:center}
-.welcome h1{font-size:35px;margin-bottom:12px}
-.welcome h1 span{color:var(--orange)}
-.welcome p{color:var(--muted);line-height:1.6;margin-bottom:28px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
-.card{border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:14px;cursor:pointer}
-.card:hover{border-color:var(--orange)}
-.card small{display:block;color:var(--muted);margin-top:5px}
-.message{display:flex;max-width:900px;margin:0 auto 22px;gap:12px}
-.avatar{width:32px;height:32px;flex:none;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold}
-.user .avatar{background:#5a3c25}
-.ai .avatar{background:var(--orange);color:#17130f}
-.bubble{max-width:calc(100% - 44px);line-height:1.65;font-size:14px;white-space:pre-wrap;word-wrap:break-word}
-.user .bubble{background:var(--user);border:1px solid #503520;padding:12px 15px;border-radius:13px}
-.ai .bubble{padding:3px 0}
-.inputArea{padding:15px 7% 20px;border-top:1px solid var(--border)}
-.inputBox{max-width:900px;margin:auto;border:1px solid var(--border);background:var(--panel);border-radius:15px;display:flex;align-items:flex-end;padding:10px}
-.inputBox:focus-within{border-color:var(--orange)}
-textarea{flex:1;resize:none;background:none;border:0;outline:0;color:var(--beige);font-family:inherit;font-size:14px;line-height:1.5;max-height:150px;padding:4px 8px}
-textarea::placeholder{color:#766c60}
-.send{width:40px;height:40px;border:0;border-radius:10px;background:var(--orange);cursor:pointer;font-weight:bold}
-.send:hover{background:#f28a32}
-.send:disabled{opacity:.5}
-.bottom{text-align:center;color:#6f665c;font-size:10px;margin-top:7px}
-.loader{position:fixed;inset:0;background:#120f0c;display:flex;align-items:center;justify-content:center;z-index:10}
-.loaderBox{width:min(500px,90%);background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:28px}
-.loaderBox h2{margin-bottom:10px}
-.loaderBox p{color:var(--muted);font-size:13px;line-height:1.6}
-.key{width:100%;margin-top:18px;background:#120f0c;color:var(--beige);border:1px solid var(--border);border-radius:9px;padding:12px;outline:none}
-.key:focus{border-color:var(--orange)}
-.start{margin-top:10px;width:100%;padding:12px;border:0;border-radius:9px;background:var(--orange);font-weight:bold;cursor:pointer}
-.start:hover{background:#f28a32}
-.hidden{display:none}
-@media(max-width:700px){.sidebar{display:none}.chat{padding:20px 16px}.inputArea{padding:12px}.cards{grid-template-columns:1fr}.welcome{margin-top:7vh}.welcome h1{font-size:29px}}
-</style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ENCABEZADO */
+    header {
+      background-color: var(--bg-card);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      background: var(--primary);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .logo-text h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      color: #4ade80;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #4ade80;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-header {
+      background: transparent;
+      border: 1px solid #475569;
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-header:hover {
+      background-color: #334155;
+      border-color: var(--primary);
+    }
+
+    /* ÁREA DE CHAT */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 85%;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: bold;
+    }
+
+    .user .avatar {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .ai .avatar {
+      background-color: #0284c7;
+      color: white;
+    }
+
+    .bubble {
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .user .bubble {
+      background-color: var(--user-msg);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .ai .bubble {
+      background-color: var(--ai-msg);
+      color: var(--text-main);
+      border-bottom-left-radius: 4px;
+    }
+
+    .ai .bubble pre {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 10px 0;
+      border: 1px solid #475569;
+    }
+
+    .ai .bubble code {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.9rem;
+    }
+
+    .engine-tag {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      text-align: right;
+    }
+
+    /* CHIPS DE SUGERENCIAS */
+    .suggestions {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 0 20px 10px;
+    }
+
+    .chip {
+      background-color: var(--bg-card);
+      border: 1px solid #334155;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      border-color: var(--primary);
+      color: var(--text-main);
+      background-color: #334155;
+    }
+
+    /* CONTENEDOR DE ENTRADA */
+    footer {
+      background-color: var(--bg-card);
+      padding: 15px 20px;
+      border-top: 1px solid #334155;
+    }
+
+    .input-box {
+      display: flex;
+      gap: 10px;
+      background-color: var(--bg-input);
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid #475569;
+    }
+
+    .input-box:focus-within {
+      border-color: var(--primary);
+    }
+
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      resize: none;
+      height: 24px;
+      max-height: 120px;
+    }
+
+    .btn-send {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .btn-send:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* MODAL PERFIL/LOGIN */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      padding: 24px;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #475569;
+    }
+
+    .modal h2 {
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+    }
+
+    .modal input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 16px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+      background: var(--bg-input);
+      color: white;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* ANIMACIÓN CARGANDO */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 4px 8px;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: #94a3b8;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="app">
+  <!-- ENCABEZADO -->
+  <header>
+    <div class="logo-container">
+      <div class="logo-icon"><i class="fa-solid fa-robot"></i></div>
+      <div class="logo-text">
+        <h1>Pakete-AI <span style="font-size: 0.7rem; color: var(--primary);">v4.0</span></h1>
+        <div class="status-badge"><span class="status-dot"></span> Motor Nube Conectado</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-header" onclick="openLoginModal()" id="user-btn">
+        <i class="fa-solid fa-user"></i> <span id="username-display">Usuario</span>
+      </button>
+      <button class="btn-header" onclick="clearChat()">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </div>
+  </header>
 
-<aside class="sidebar">
+  <!-- CHAT PRINCIPAL -->
+  <main id="chat-container">
+    <div class="message ai">
+      <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+      <div>
+        <div class="bubble">
+          ¡Hola! Soy **Pakete-AI**. Mi motor está conectado en la nube y listo para ayudarte sin depender de servidores locales. ¿En qué trabajamos hoy?
+        </div>
+      </div>
+    </div>
+  </main>
 
-<div class="logo">
-<div class="logoIcon">P</div>
-<div class="logoText">PaketeAI</div>
-</div>
+  <!-- SUGERENCIAS -->
+  <div class="suggestions">
+    <div class="chip" onclick="useChip('Explícame de forma sencilla cómo funciona la IA')">💡 Explicar concepto</div>
+    <div class="chip" onclick="useChip('Escribe un código HTML y CSS para una tarjeta de presentación')">💻 Crear código</div>
+    <div class="chip" onclick="useChip('Resume las ideas principales sobre el cambio climático')">📝 Resumir texto</div>
+    <div class="chip" onclick="useChip('Dame 5 ideas para un proyecto educativo')">🚀 Generar ideas</div>
+  </div>
 
-<button class="newChat" onclick="nuevo()">＋ Nueva conversación</button>
+  <!-- ENTRADA DE TEXTO -->
+  <footer>
+    <div class="input-box">
+      <textarea id="user-input" placeholder="Escribe tu mensaje aquí..." rows="1" onkeydown="handleKeyPress(event)"></textarea>
+      <button class="btn-send" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+    </div>
+  </footer>
 
-<div class="sidebarSection">Motor</div>
+  <!-- MODAL DE USUARIO -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h2>Perfil de Usuario</h2>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">Ingresa tus datos para personalizar tu experiencia (guardado localmente).</p>
+      
+      <label style="font-size: 0.8rem; margin-top: 10px; display:block;">Nombre:</label>
+      <input type="text" id="input-name" placeholder="Tu nombre">
 
-<div style="margin-top:10px;color:#b9aa94;font-size:12px;line-height:1.6">
-PaketeAI IA Lista (Conexión optimizada).
-</div>
+      <label style="font-size: 0.8rem; display:block;">Correo de Google (Opcional):</label>
+      <input type="email" id="input-email" placeholder="usuario@gmail.com">
 
-<div class="status">
-<span id="dot" class="dot"></span>
-<span id="status">Esperando usuario</span>
-</div>
+      <div class="modal-buttons">
+        <button class="btn-header" onclick="closeLoginModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveProfile()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
-</aside>
+  <script>
+    let chatHistory = [];
+    let currentUser = localStorage.getItem('pakete_user') || 'Usuario';
 
-<main class="main">
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('username-display').innerText = currentUser;
+      loadHistory();
+    });
 
-<header class="header">
-<div><b>PaketeAI 3.1</b></div>
-<div class="model">IA Integrada</div>
-</header>
-
-<section class="chat" id="chat">
-
-<div class="welcome" id="welcome">
-
-<h1>Hola, soy <span>PaketeAI</span></h1>
-
-<p>
-Una versión ligera de PaketeAI conectada directamente a inteligencia artificial sin necesidad de API Key.
-</p>
-
-<div class="cards">
-
-<div class="card" onclick="ejemplo('Explícame de forma sencilla qué es la inteligencia artificial.')">
-💡 Explicar algo
-<small>Obtén una explicación clara</small>
-</div>
-
-<div class="card" onclick="ejemplo('Resuelve paso a paso: 25% de 480.')">
-🧮 Resolver
-<small>Matemáticas y problemas</small>
-</div>
-
-<div class="card" onclick="ejemplo('Resume la Revolución Francesa.')">
-📚 Resumir
-<small>Resume información</small>
-</div>
-
-<div class="card" onclick="ejemplo('Escribe un texto formal sobre la importancia de cuidar el medio ambiente.')">
-✍️ Escribir
-<small>Genera textos</small>
-</div>
-
-</div>
-</div>
-
-</section>
-
-<div class="inputArea">
-
-<div class="inputBox">
-
-<textarea id="input"
-rows="1"
-placeholder="Escribe un mensaje..."
-onkeydown="tecla(event)"
-oninput="alto(this)"></textarea>
-
-<button class="send" id="send" onclick="enviar()">➤</button>
-
-</div>
-
-<div class="bottom">
-PaketeAI · Listo para usar
-</div>
-
-</div>
-
-</main>
-</div>
-
-
-<!-- CONFIGURACIÓN DE USUARIO -->
-
-<div class="loader" id="loader">
-
-<div class="loaderBox">
-
-<h2>Acceso a PaketeAI</h2>
-
-<p>
-Ingresa tu nombre de usuario o correo electrónico para iniciar sesión:
-</p>
-
-<input
-class="key"
-id="user_id"
-type="text"
-placeholder="Ej: usuario123 o correo@gmail.com">
-
-<button class="start" onclick="iniciar()">
-Iniciar PaketeAI
-</button>
-
-<p style="margin-top:12px;font-size:11px">
-No se requiere ninguna clave API. Tu usuario se guarda en este navegador.
-</p>
-
-</div>
-
-</div>
-
-
-<script>
-
-const USER_STORAGE = "pakete_user_id";
-const CHAT_STORAGE = "pakete_chat";
-
-let mensajes = [];
-
-try {
-  mensajes = JSON.parse(localStorage.getItem(CHAT_STORAGE) || "[]");
-} catch {
-  mensajes = [];
-}
-
-function iniciar() {
-  let user = document.getElementById("user_id").value.trim();
-  if (!user) {
-    alert("Por favor ingresa tu nombre de usuario o correo.");
-    return;
-  }
-  localStorage.setItem(USER_STORAGE, user);
-  document.getElementById("loader").classList.add("hidden");
-  document.getElementById("dot").classList.add("ok");
-  document.getElementById("status").textContent = "Usuario: " + user;
-  restaurar();
-}
-
-async function enviar() {
-  let input = document.getElementById("input");
-  let texto = input.value.trim();
-  if (!texto) return;
-
-  input.value = "";
-  alto(input);
-
-  agregar("user", texto);
-  mensajes.push({ role: "user", text: texto });
-  guardar();
-
-  let typing = agregar("ai", "Pensando...");
-
-  let promptCompleto = "Instrucción: Eres PaketeAI, un asistente en español claro y conciso.\n\n";
-  let ultimos = mensajes.slice(-6);
-  for (let m of ultimos) {
-    promptCompleto += (m.role === "user" ? "Usuario: " : "PaketeAI: ") + m.text + "\n";
-  }
-
-  try {
-    let respuestaText = "";
-    
-    // Método 1: GET directo con URL encode (evita preflight OPTIONS / bloqueos CORS de archivo local)
-    const seed = Math.floor(Math.random() * 1000000);
-    const urlGET = "https://text.pollinations.ai/" + encodeURIComponent(promptCompleto) + "?seed=" + seed + "&system=" + encodeURIComponent("Eres PaketeAI, un asistente útil en español.");
-
-    try {
-      let res = await fetch(urlGET);
-      if (res.ok) {
-        respuestaText = await res.text();
+    function handleKeyPress(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
       }
-    } catch (e) {
-      console.warn("Intento GET falló:", e);
     }
 
-    // Método 2: POST de respaldo
-    if (!respuestaText || respuestaText.includes("Error")) {
-      let resPost = await fetch("https://text.pollinations.ai/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [
-            { role: "system", content: "Eres PaketeAI, un asistente amigable en español." },
-            ...ultimos.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }))
-          ]
-        })
-      });
+    function useChip(text) {
+      document.getElementById('user-input').value = text;
+      sendMessage();
+    }
 
-      if (resPost.ok) {
-        let raw = await resPost.text();
+    async function sendMessage() {
+      const input = document.getElementById('user-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      appendMessage('user', text);
+
+      // Mostrar indicador de carga
+      const loadingId = appendLoading();
+
+      try {
+        const response = await fetchAIResponse(text);
+        removeLoading(loadingId);
+        appendMessage('ai', response.text, response.engine);
+      } catch (err) {
+        removeLoading(loadingId);
+        appendMessage('ai', '⚠️ No se pudo conectar con el motor en este momento. Revisa tu conexión a internet e inténtalo de nuevo.');
+      }
+    }
+
+    // LÓGICA DEL MOTOR IA MULTI-SERVICIO
+    async function fetchAIResponse(prompt) {
+      // Intento 1: Puter.js Engine (Sin API Key, ejecutable directamente en el cliente)
+      if (typeof puter !== 'undefined' && puter.ai && puter.ai.chat) {
         try {
-          let parsed = JSON.parse(raw);
-          respuestaText = parsed.choices?.[0]?.message?.content || parsed.text || raw;
-        } catch {
-          respuestaText = raw;
+          const sysPrompt = "Eres Pakete-AI, un asistente de IA rápido, amable y conciso. Responde en español y usa formato Markdown cuando sea conveniente.";
+          const fullQuery = `${sysPrompt}\n\nPregunta: ${prompt}`;
+          const res = await puter.ai.chat(fullQuery);
+          
+          let outputText = "";
+          if (typeof res === 'string') outputText = res;
+          else if (res?.message?.content) outputText = res.message.content;
+          else if (res?.text) outputText = res.text;
+
+          if (outputText && outputText.trim().length > 0) {
+            return { text: outputText, engine: 'Motor Nube Puter AI' };
+          }
+        } catch (e) {
+          console.warn("Fallo Puter AI, cambiando a motor secundario...", e);
         }
       }
+
+      // Intento 2: Pollinations Cloud (Respaldo directo GET)
+      try {
+        const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&seed=${Math.floor(Math.random()*10000)}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const text = await res.text();
+          if (text && text.trim().length > 0) {
+            return { text: text, engine: 'Motor Nube Pollinations' };
+          }
+        }
+      } catch (e) {
+        console.warn("Fallo motor secundario Pollinations GET", e);
+      }
+
+      // Intento 3: Pollinations POST
+      try {
+        const res = await fetch('https://text.pollinations.ai/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: prompt }],
+            model: 'openai'
+          })
+        });
+        if (res.ok) {
+          const text = await res.text();
+          return { text: text, engine: 'Motor Nube Alternativo' };
+        }
+      } catch (e) {
+        console.error("Todos los motores fallaron", e);
+      }
+
+      throw new Error("Sin respuesta del servicio");
     }
 
-    if (!respuestaText || respuestaText.trim() === "") {
-      throw new Error("No se pudo obtener respuesta del servidor.");
+    function appendMessage(role, text, engine = '') {
+      const container = document.getElementById('chat-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${role}`;
+
+      const initial = role === 'user' ? currentUser.charAt(0).toUpperCase() : '<i class="fa-solid fa-robot"></i>';
+      const formattedText = role === 'ai' ? marked.parse(text) : text;
+
+      msgDiv.innerHTML = `
+        <div class="avatar">${initial}</div>
+        <div>
+          <div class="bubble">${formattedText}</div>
+          ${engine ? `<div class="engine-tag"><i class="fa-solid fa-bolt"></i> ${engine}</div>` : ''}
+        </div>
+      `;
+
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+
+      saveHistory();
     }
 
-    typing.remove();
-    let finalClean = respuestaText.trim();
-    agregar("ai", finalClean);
-    mensajes.push({ role: "ai", text: finalClean });
-    guardar();
+    function appendLoading() {
+      const container = document.getElementById('chat-container');
+      const id = 'loading-' + Date.now();
+      const div = document.createElement('div');
+      div.className = 'message ai';
+      div.id = id;
+      div.innerHTML = `
+        <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="bubble">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return id;
+    }
 
-  } catch (error) {
-    typing.remove();
-    agregar(
-      "ai",
-      "⚠️ Ocurrió un inconveniente al conectar con el motor.\n\n" +
-      "Detalle: " + error.message + "\n\n" +
-      "Sugerencia: Si abres el archivo directamente con doble clic (`file://`), el navegador puede bloquear ciertas peticiones por seguridad. Prueba abrirlo o reintentar el envío."
-    );
-  }
-}
+    function removeLoading(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
 
-function agregar(tipo, texto) {
-  let chat = document.getElementById("chat");
-  if (document.getElementById("welcome"))
-    document.getElementById("welcome").style.display = "none";
+    function clearChat() {
+      if (confirm("¿Deseas borrar la conversación actual?")) {
+        document.getElementById('chat-container').innerHTML = `
+          <div class="message ai">
+            <div class="avatar"><i class="fa-solid fa-robot"></i></div>
+            <div class="bubble">Historial borrado. ¿En qué te puedo ayudar ahora?</div>
+          </div>
+        `;
+        localStorage.removeItem('pakete_history');
+      }
+    }
 
-  let div = document.createElement("div");
-  div.className = "message " + tipo;
+    function saveHistory() {
+      // Guarda hasta las últimas 20 interacciones
+      const container = document.getElementById('chat-container');
+      localStorage.setItem('pakete_history', container.innerHTML);
+    }
 
-  let avatar = tipo === "user" ? "TÚ" : "P";
-  let bubble = tipo === "user" ? escapeHTML(texto) : formatear(texto);
+    function loadHistory() {
+      const saved = localStorage.getItem('pakete_history');
+      if (saved) {
+        document.getElementById('chat-container').innerHTML = saved;
+      }
+    }
 
-  div.innerHTML = `<div class="avatar">${avatar}</div><div class="bubble">${bubble}</div>`;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+    /* MANEJO DE MODAL */
+    function openLoginModal() {
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('input-name').value = currentUser;
+    }
 
-  return div;
-}
+    function closeLoginModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
 
-function formatear(texto) {
-  let x = escapeHTML(texto);
-  x = x.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  x = x.replace(/`([^`]+)`/g, "<code>$1</code>");
-  return x;
-}
-
-function escapeHTML(x) {
-  return String(x)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function guardar() {
-  localStorage.setItem(CHAT_STORAGE, JSON.stringify(mensajes.slice(-30)));
-}
-
-function restaurar() {
-  for (let m of mensajes) {
-    agregar(m.role === "user" ? "user" : "ai", m.text);
-  }
-}
-
-function nuevo() {
-  mensajes = [];
-  localStorage.removeItem(CHAT_STORAGE);
-  document.getElementById("chat").innerHTML = `
-<div class="welcome" id="welcome">
-<h1>Hola, soy <span>PaketeAI</span></h1>
-<p>Una versión ligera de PaketeAI conectada directamente a inteligencia artificial sin necesidad de API Key.</p>
-<div class="cards">
-<div class="card" onclick="ejemplo('Explícame qué es la inteligencia artificial.')">💡 Explicar algo<small>Obtén una explicación clara</small></div>
-<div class="card" onclick="ejemplo('Resuelve paso a paso: 25% de 480.')">🧮 Resolver<small>Matemáticas y problemas</small></div>
-<div class="card" onclick="ejemplo('Resume la Revolución Francesa.')">📚 Resumir<small>Resume información</small></div>
-<div class="card" onclick="ejemplo('Escribe un texto formal sobre el medio ambiente.')">✍️ Escribir<small>Genera textos</small></div>
-</div>
-</div>`;
-}
-
-function ejemplo(t) {
-  let input = document.getElementById("input");
-  input.value = t;
-  input.focus();
-  alto(input);
-}
-
-function tecla(e) {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    enviar();
-  }
-}
-
-function alto(x) {
-  x.style.height = "auto";
-  x.style.height = Math.min(x.scrollHeight, 150) + "px";
-}
-
-window.addEventListener("load", () => {
-  let saved = localStorage.getItem(USER_STORAGE);
-  if (saved) {
-    document.getElementById("user_id").value = saved;
-    document.getElementById("loader").classList.add("hidden");
-    document.getElementById("dot").classList.add("ok");
-    document.getElementById("status").textContent = "Usuario: " + saved;
-    restaurar();
-  }
-});
-
-</script>
-
+    function saveProfile() {
+      const name = document.getElementById('input-name').value.trim();
+      if (name) {
+        currentUser = name;
+        localStorage.setItem('pakete_user', name);
+        document.getElementById('username-display').innerText = name;
+      }
+      closeLoginModal();
+    }
+  </script>
 </body>
 </html>
