@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PaketeAI 7.0 Ultra Engine</title>
+  <title>PaketeAI 8.0 Ultra Engine</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <!-- LIBRERÍA DE CONEXIÓN IA -->
@@ -320,28 +320,19 @@
     <div class="brand">
       <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
       <div>
-        <div class="brand-title">PaketeAI 7.0 Ultra</div>
-        <div class="status"><span class="dot"></span> Motor de Texto e Imágenes Conectado</div>
+        <div class="brand-title">PaketeAI 8.0 Ultra</div>
+        <div class="status"><span class="dot"></span> Historial Local Guardado</div>
       </div>
     </div>
     <div class="actions">
-      <button class="btn-icon" onclick="resetChat()" title="Borrar chat"><i class="fa-solid fa-trash"></i></button>
+      <button class="btn-icon" onclick="resetChat()" title="Borrar chat e historial"><i class="fa-solid fa-trash"></i></button>
     </div>
   </header>
 
-  <main id="chat-box">
-    <div class="msg-row ai">
-      <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
-      <div class="msg-content">
-        <div class="msg-bubble">
-          ¡Hola! Sistema completamente operacional. Escribe cualquier duda, adjunta un archivo con 📎 o escribe `/img` para generar imágenes de alta definición.
-        </div>
-      </div>
-    </div>
-  </main>
+  <main id="chat-box"></main>
 
   <div class="chips-wrapper">
-    <div class="chip" onclick="quickSend('/img un gato astronauta flotando en el espacio realista')">🎨 Gato astronauta</div>
+    <div class="chip" onclick="quickSend('/img a cute cat floating in space, hyperrealistic, 8k')">🎨 Gato espacial 8K</div>
     <div class="chip" onclick="quickSend('Resumen del sistema solar en 3 puntos')">🌌 Sistema solar</div>
     <div class="chip" onclick="quickSend('Crea una función en Python para calcular el factorial')">💻 Código Python</div>
   </div>
@@ -361,6 +352,47 @@
   <script>
     const chatBox = document.getElementById('chat-box');
     const inputArea = document.getElementById('user-input');
+    const STORAGE_KEY = 'pakete_ai_chat_history';
+
+    let chatHistory = [];
+
+    // CARGAR HISTORIAL AL INICIAR
+    window.addEventListener('DOMContentLoaded', () => {
+      loadHistory();
+    });
+
+    function saveHistory() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(chatHistory));
+      } catch (e) {
+        console.error('Error al guardar historial:', e);
+      }
+    }
+
+    function loadHistory() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          chatHistory = JSON.parse(saved);
+          if (Array.isArray(chatHistory) && chatHistory.length > 0) {
+            chatBox.innerHTML = '';
+            chatHistory.forEach(msg => renderMsgDOM(msg.role, msg.text, msg.source));
+            return;
+          }
+        } catch (e) {
+          console.error('Error al leer historial guardado:', e);
+        }
+      }
+
+      // Si no hay historial, creamos el mensaje de bienvenida inicial
+      chatHistory = [{
+        role: 'ai',
+        text: '¡Hola! Sistema activado con **guardado automático de historial**. Escribe tus dudas, adjunta archivos con 📎 o genera imágenes con `/img`.',
+        source: ''
+      }];
+      saveHistory();
+      renderMsgDOM(chatHistory[0].role, chatHistory[0].text, chatHistory[0].source);
+    }
 
     function handleKey(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -397,7 +429,6 @@
         let finalSrc = '';
         let engineName = 'Pakete Image Engine';
 
-        // Intentar Puter si está disponible
         try {
           if (window.puter && window.puter.ai && typeof window.puter.ai.txt2img === 'function') {
             const resImg = await puter.ai.txt2img(promptImagen, { testMode: true });
@@ -406,11 +437,8 @@
               engineName = 'Puter Engine';
             }
           }
-        } catch(e) {
-          // Si falla Puter, el flujo continúa sin interrupción al generador directo
-        }
+        } catch(e) {}
 
-        // Si Puter no devolvió URL, usar el motor dinámico sin restricciones CORS
         if (!finalSrc) {
           const seed = Math.floor(Math.random() * 999999);
           finalSrc = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptImagen)}?nologo=true&seed=${seed}`;
@@ -444,7 +472,7 @@
       }
     }
 
-    // ADJUNTAR Y LEER ARCHIVOS LOCALES
+    // ADJUNTAR ARCHIVOS LOCALES
     function procesarArchivo(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -460,7 +488,6 @@
 
     // OBTENER RESPUESTA DE TEXTO
     async function fetchFastAI(prompt) {
-      // 1. Puter.js
       if (window.puter && window.puter.ai) {
         try {
           const res = await puter.ai.chat(prompt);
@@ -471,7 +498,6 @@
         } catch (e) {}
       }
 
-      // 2. Pollinations Direct Fetch
       try {
         const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
         if (res.ok) {
@@ -485,7 +511,15 @@
       throw new Error('Sin conexión');
     }
 
+    // REGISTRAR EN HISTORIAL Y RENDERIZAR
     function appendMsg(role, text, source = '') {
+      chatHistory.push({ role, text, source });
+      saveHistory();
+      renderMsgDOM(role, text, source);
+    }
+
+    // DIBUJAR EN EL DOM
+    function renderMsgDOM(role, text, source = '') {
       const row = document.createElement('div');
       row.className = `msg-row ${role}`;
 
@@ -528,14 +562,10 @@
     }
 
     function resetChat() {
-      chatBox.innerHTML = `
-        <div class="msg-row ai">
-          <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
-          <div class="msg-content">
-            <div class="msg-bubble">Conversación reiniciada. ¿En qué puedo ayudarte?</div>
-          </div>
-        </div>
-      `;
+      chatHistory = [];
+      localStorage.removeItem(STORAGE_KEY);
+      chatBox.innerHTML = '';
+      appendMsg('ai', 'Conversación e historial limpiados con éxito. ¿En qué puedo ayudarte?');
     }
   </script>
 </body>
