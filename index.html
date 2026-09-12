@@ -10,15 +10,17 @@
   
   <style>
     :root {
-      --bg-main: #0b0f19;
-      --bg-panel: #151c2c;
-      --bg-bubble-ai: #1e293b;
-      --bg-bubble-user: #2563eb;
-      --accent: #3b82f6;
-      --accent-hover: #1d4ed8;
-      --text-primary: #f8fafc;
-      --text-secondary: #94a3b8;
-      --border: #334155;
+      --bg-dark-1: #0a0c10;
+      --bg-dark-2: #161a24;
+      --panel-bg: rgba(22, 26, 36, 0.85);
+      --beige-light: #f4eee0;
+      --beige-card: #e8dfcc;
+      --text-dark: #12141a;
+      --text-muted: #9a9eab;
+      --orange: #ff6b2b;
+      --orange-hover: #e0551b;
+      --border: rgba(244, 238, 224, 0.12);
+      --ai-bubble: #1f2533;
     }
 
     * {
@@ -29,22 +31,24 @@
     }
 
     body {
-      background-color: var(--bg-main);
-      color: var(--text-primary);
+      background: linear-gradient(135deg, var(--bg-dark-1) 0%, var(--bg-dark-2) 100%);
+      color: var(--beige-light);
       height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* BARRA SUPERIOR */
+    /* ENCABEZADO */
     header {
-      background: var(--bg-panel);
-      padding: 14px 20px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
+      padding: 14px 22px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
 
     .brand {
@@ -54,26 +58,28 @@
     }
 
     .brand-icon {
-      background: var(--accent);
-      color: white;
-      width: 36px;
-      height: 36px;
+      background: linear-gradient(135deg, var(--orange), #ff8800);
+      color: #fff;
+      width: 38px;
+      height: 38px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.1rem;
+      box-shadow: 0 0 12px rgba(255, 107, 43, 0.4);
     }
 
     .brand-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 700;
       letter-spacing: 0.5px;
+      color: var(--beige-light);
     }
 
     .status {
       font-size: 0.75rem;
-      color: #22c55e;
+      color: #34d399;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -82,8 +88,9 @@
     .dot {
       width: 7px;
       height: 7px;
-      background: #22c55e;
+      background: #34d399;
       border-radius: 50%;
+      box-shadow: 0 0 8px #34d399;
     }
 
     .actions {
@@ -92,9 +99,9 @@
     }
 
     .btn-icon {
-      background: transparent;
+      background: rgba(244, 238, 224, 0.05);
       border: 1px solid var(--border);
-      color: var(--text-secondary);
+      color: var(--beige-light);
       width: 36px;
       height: 36px;
       border-radius: 8px;
@@ -106,9 +113,9 @@
     }
 
     .btn-icon:hover {
-      color: var(--text-primary);
-      border-color: var(--accent);
-      background: var(--bg-bubble-ai);
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255, 107, 43, 0.1);
     }
 
     /* ÁREA DE CONVERSACIÓN */
@@ -124,7 +131,7 @@
     .msg-row {
       display: flex;
       gap: 12px;
-      max-width: 85%;
+      max-width: 82%;
     }
 
     .msg-row.user {
@@ -144,13 +151,14 @@
     }
 
     .user .msg-avatar {
-      background: var(--accent);
-      color: white;
+      background: var(--beige-light);
+      color: var(--text-dark);
+      font-weight: bold;
     }
 
     .ai .msg-avatar {
-      background: #334155;
-      color: #38bdf8;
+      background: var(--orange);
+      color: #fff;
     }
 
     .msg-content {
@@ -160,24 +168,26 @@
     }
 
     .msg-bubble {
-      padding: 12px 16px;
-      border-radius: 14px;
+      padding: 13px 18px;
+      border-radius: 16px;
       font-size: 0.95rem;
       line-height: 1.5;
       word-break: break-word;
     }
 
     .user .msg-bubble {
-      background: var(--bg-bubble-user);
-      color: white;
+      background: var(--beige-light);
+      color: var(--text-dark);
       border-top-right-radius: 2px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
 
     .ai .msg-bubble {
-      background: var(--bg-bubble-ai);
-      color: var(--text-primary);
+      background: var(--ai-bubble);
+      color: var(--beige-light);
       border-top-left-radius: 2px;
       border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .msg-bubble p {
@@ -189,22 +199,23 @@
     }
 
     .msg-bubble pre {
-      background: #0f172a;
-      padding: 10px;
-      border-radius: 6px;
+      background: #0d1017;
+      padding: 12px;
+      border-radius: 8px;
       overflow-x: auto;
-      margin: 8px 0;
+      margin: 10px 0;
       border: 1px solid var(--border);
     }
 
     .msg-bubble code {
       font-family: monospace;
       font-size: 0.85rem;
+      color: var(--orange);
     }
 
     .msg-meta {
       font-size: 0.7rem;
-      color: var(--text-secondary);
+      color: var(--text-muted);
     }
 
     .user .msg-meta {
@@ -220,9 +231,9 @@
     }
 
     .chip {
-      background: var(--bg-panel);
+      background: rgba(244, 238, 224, 0.05);
       border: 1px solid var(--border);
-      color: var(--text-secondary);
+      color: var(--beige-light);
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.8rem;
@@ -232,13 +243,15 @@
     }
 
     .chip:hover {
-      border-color: var(--accent);
-      color: var(--text-primary);
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255, 107, 43, 0.1);
     }
 
     /* ENTRADA DE TEXTO */
     footer {
-      background: var(--bg-panel);
+      background: var(--panel-bg);
+      backdrop-filter: blur(10px);
       padding: 16px 20px;
       border-top: 1px solid var(--border);
     }
@@ -246,15 +259,17 @@
     .input-container {
       display: flex;
       gap: 10px;
-      background: var(--bg-main);
+      background: rgba(10, 12, 16, 0.6);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 8px 12px;
       align-items: flex-end;
+      transition: border 0.2s;
     }
 
     .input-container:focus-within {
-      border-color: var(--accent);
+      border-color: var(--orange);
+      box-shadow: 0 0 10px rgba(255, 107, 43, 0.2);
     }
 
     textarea {
@@ -262,29 +277,37 @@
       background: transparent;
       border: none;
       outline: none;
-      color: var(--text-primary);
+      color: var(--beige-light);
       font-size: 0.95rem;
       resize: none;
       max-height: 100px;
       height: 24px;
     }
 
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
     .btn-send {
-      background: var(--accent);
-      color: white;
+      background: var(--orange);
+      color: #fff;
       border: none;
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
 
     .btn-send:hover {
-      background: var(--accent-hover);
+      background: var(--orange-hover);
+    }
+
+    .btn-send:active {
+      transform: scale(0.95);
     }
 
     /* ANIMACIÓN CARGANDO */
@@ -297,9 +320,9 @@
     .dots-loader div {
       width: 6px;
       height: 6px;
-      background: var(--text-secondary);
+      background: var(--orange);
       border-radius: 50%;
-      animation: pulse 1s infinite alternate;
+      animation: pulse 0.8s infinite alternate;
     }
 
     .dots-loader div:nth-child(2) { animation-delay: 0.2s; }
@@ -318,7 +341,7 @@
       <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
       <div>
         <div class="brand-title">PaketeAI</div>
-        <div class="status"><span class="dot"></span> En línea</div>
+        <div class="status"><span class="dot"></span> Modo Rápido Activo</div>
       </div>
     </div>
     <div class="actions">
@@ -331,16 +354,16 @@
       <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
       <div class="msg-content">
         <div class="msg-bubble">
-          ¡Hola! Soy **PaketeAI**. Sistema restablecido con sincronización garantizada. ¿En qué trabajamos hoy?
+          ¡Diseño actualizado! Respuesta ultra rápida lista. ¿En qué trabajamos hoy?
         </div>
       </div>
     </div>
   </main>
 
   <div class="chips-wrapper">
-    <div class="chip" onclick="quickSend('Resumen sobre la Revolución Industrial')">📚 Resumen escolar</div>
-    <div class="chip" onclick="quickSend('Escribe un código HTML/CSS sencillo')">💻 Ejemplo de código</div>
-    <div class="chip" onclick="quickSend('Consejos para estudiar mejor')">🧠 Tips de estudio</div>
+    <div class="chip" onclick="quickSend('Resumen rápido sobre la fotosíntesis')">🌿 Resumen escolar</div>
+    <div class="chip" onclick="quickSend('Escribe una función simple en JavaScript')">💻 Ejemplo de código</div>
+    <div class="chip" onclick="quickSend('Dame 3 consejos de productividad')">⚡ Consejos rápidos</div>
   </div>
 
   <footer>
@@ -384,28 +407,44 @@
       const loaderId = showLoader();
 
       try {
-        const response = await fetchAI(text);
+        const response = await fetchFastAI(text);
         removeLoader(loaderId);
         appendMsg('ai', response.content, response.source);
       } catch (err) {
         removeLoader(loaderId);
-        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Inténtalo de nuevo en unos segundos.');
+        appendMsg('ai', '⚠️ No se pudo obtener respuesta rápida. Revisa tu conexión e inténtalo de nuevo.');
       }
     }
 
-    async function fetchAI(prompt) {
-      // Motor 1: Pollinations GET
+    // ESTRATEGIA DE RESPUESTA RÁPIDA (Optimizada)
+    async function fetchFastAI(prompt) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000); // 4 segundos máx por intento
+
+      // 1. Vía Ultra-Rápida: Pollinations GET Directo
       try {
-        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai&cache=${Date.now()}`);
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
         if (res.ok) {
           const txt = await res.text();
           if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
-            return { content: txt.trim(), source: 'Pollinations Cloud' };
+            return { content: txt.trim(), source: 'Pakete Fast-Cloud' };
           }
         }
       } catch (e) {}
 
-      // Motor 2: Pollinations POST
+      // 2. Vía Puter AI
+      if (typeof puter !== 'undefined' && puter.ai) {
+        try {
+          const res = await puter.ai.chat(prompt);
+          let txt = typeof res === 'string' ? res : (res?.message?.content || res?.text);
+          if (txt && txt.trim()) return { content: txt.trim(), source: 'Puter Engine' };
+        } catch (e) {}
+      }
+
+      // 3. Respaldo POST
       try {
         const res = await fetch('https://text.pollinations.ai/', {
           method: 'POST',
@@ -417,49 +456,30 @@
         });
         if (res.ok) {
           const txt = await res.text();
-          if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
-            return { content: txt.trim(), source: 'Cloud Engine' };
-          }
+          if (txt && txt.trim()) return { content: txt.trim(), source: 'Cloud Fallback' };
         }
       } catch (e) {}
 
-      // Motor 3: Puter AI
-      if (typeof puter !== 'undefined' && puter.ai) {
-        try {
-          const res = await puter.ai.chat(prompt);
-          let txt = '';
-          if (typeof res === 'string') txt = res;
-          else if (res?.message?.content) txt = res.message.content;
-          else if (res?.text) txt = res.text;
-
-          if (txt && txt.trim()) return { content: txt.trim(), source: 'Puter Engine' };
-        } catch (e) {}
-      }
-
-      throw new Error('Todos los motores fallaron');
+      throw new Error('Timeout o falla de red');
     }
 
     function appendMsg(role, text, source = '') {
-      try {
-        const row = document.createElement('div');
-        row.className = `msg-row ${role}`;
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
 
-        const avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
-        const parsed = role === 'ai' ? parseText(text) : String(text || '');
+      const avatar = role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+      const parsed = role === 'ai' ? parseText(text) : String(text || '');
 
-        row.innerHTML = `
-          <div class="msg-avatar">${avatar}</div>
-          <div class="msg-content">
-            <div class="msg-bubble">${parsed}</div>
-            ${source ? `<div class="msg-meta">${source}</div>` : ''}
-          </div>
-        `;
+      row.innerHTML = `
+        <div class="msg-avatar">${avatar}</div>
+        <div class="msg-content">
+          <div class="msg-bubble">${parsed}</div>
+          ${source ? `<div class="msg-meta">${source}</div>` : ''}
+        </div>
+      `;
 
-        chatBox.appendChild(row);
-        chatBox.scrollTop = chatBox.scrollHeight;
-      } catch (e) {
-        console.error("Error mostrando mensaje:", e);
-      }
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     function showLoader() {
