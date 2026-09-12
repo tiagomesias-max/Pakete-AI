@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PaketeAI 5.0 - Multimodal</title>
+  <title>PaketeAI 4.0 Ultra</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   
@@ -87,6 +87,11 @@
       background: #34d399;
       border-radius: 50%;
       box-shadow: 0 0 8px #34d399;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
     }
 
     .btn-icon {
@@ -180,12 +185,22 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    .msg-bubble img {
-      max-width: 100%;
-      border-radius: 10px;
-      margin-top: 8px;
+    .msg-bubble p { margin-bottom: 8px; }
+    .msg-bubble p:last-child { margin-bottom: 0; }
+
+    .msg-bubble pre {
+      background: #0d1017;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 10px 0;
       border: 1px solid var(--border);
-      display: block;
+    }
+
+    .msg-bubble code {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--orange);
     }
 
     .msg-meta {
@@ -303,8 +318,8 @@
     <div class="brand">
       <div class="brand-icon"><i class="fa-solid fa-bolt"></i></div>
       <div>
-        <div class="brand-title">PaketeAI 5.0</div>
-        <div class="status"><span class="dot"></span> Texto + Imágenes + Archivos</div>
+        <div class="brand-title">PaketeAI 4.0 Ultra</div>
+        <div class="status"><span class="dot"></span> En línea (Texto, Imágenes y Adjuntos)</div>
       </div>
     </div>
     <div class="actions">
@@ -317,16 +332,16 @@
       <div class="msg-avatar"><i class="fa-solid fa-robot"></i></div>
       <div class="msg-content">
         <div class="msg-bubble">
-          ¡Hola! Puedes escribirme texto, usar el botón de 📌 para adjuntar archivos de código/texto o escribir `/img` antes de una descripción para generar imágenes.
+          ¡Hola! Soy **PaketeAI**. Escribe tu consulta, usa 📎 para cargar archivos de texto o código, o empieza tu mensaje con `/img` para generar una imagen.
         </div>
       </div>
     </div>
   </main>
 
   <div class="chips-wrapper">
-    <div class="chip" onclick="quickSend('/img un gato astronauta en el espacio exterior en arte digital')">🎨 Dibuja un gato astronauta</div>
-    <div class="chip" onclick="quickSend('Resumen de la Segunda Guerra Mundial en 3 puntos')">📜 Resumen rápido</div>
-    <div class="chip" onclick="quickSend('Escribe un script simple en Python')">💻 Código Python</div>
+    <div class="chip" onclick="quickSend('/img un planeta futurista con anillos brillantes')">🎨 Dibuja un planeta futurista</div>
+    <div class="chip" onclick="quickSend('Resumen rápido sobre la fotosíntesis')">🌿 Resumen escolar</div>
+    <div class="chip" onclick="quickSend('Escribe un script simple en JavaScript')">💻 Ejemplo de código</div>
   </div>
 
   <footer>
@@ -335,9 +350,8 @@
       <button class="btn-icon" onclick="document.getElementById('file-selector').click()" title="Adjuntar archivo de texto o código">
         <i class="fa-solid fa-paperclip"></i>
       </button>
-      
+
       <textarea id="user-input" placeholder="Escribe un mensaje o `/img` para imágenes..." rows="1" onkeydown="handleKey(event)"></textarea>
-      
       <button class="btn-send" onclick="sendMsg()"><i class="fa-solid fa-paper-plane"></i></button>
     </div>
   </footer>
@@ -373,14 +387,16 @@
       inputArea.value = '';
       appendMsg('user', text);
 
-      // DETECCIÓN DE GENERACIÓN DE IMAGEN
+      // DETECTAR COMANDO DE IMAGEN
       if (text.toLowerCase().startsWith('/img ') || text.toLowerCase().startsWith('/imagen ')) {
         const promptImagen = text.replace(/^\/(img|imagen)\s+/i, '');
-        generarImagen(promptImagen);
+        const imgUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptImagen)}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+        
+        appendMsg('ai', `Imagen generada para: **${promptImagen}**<br><img src="${imgUrl}" style="max-width:100%; border-radius:10px; margin-top:8px;" alt="${promptImagen}">`, 'Pakete Image Engine');
         return;
       }
 
-      // PROCESAMIENTO DE TEXTO NORMAL
+      // PETICIÓN DE TEXTO NORMAL
       const loaderId = showLoader();
 
       try {
@@ -389,75 +405,61 @@
         appendMsg('ai', response.content, response.source);
       } catch (err) {
         removeLoader(loaderId);
-        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Inténtalo nuevamente.');
+        appendMsg('ai', '⚠️ No se pudo obtener respuesta del servidor. Revisa tu conexión e inténtalo de nuevo.');
       }
     }
 
-    // FUNCIÓN PARA GENERAR IMÁGENES
-    function generarImagen(prompt) {
-      const loaderId = showLoader();
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
-      
-      const img = new Image();
-      img.onload = () => {
-        removeLoader(loaderId);
-        const content = `Aquí tienes la imagen generada para: **${prompt}**<br><img src="${imageUrl}" alt="${prompt}">`;
-        appendMsg('ai', content, 'Generador de Imágenes');
-      };
-
-      img.onerror = () => {
-        removeLoader(loaderId);
-        appendMsg('ai', '⚠️ Error al generar la imagen. Inténtalo de nuevo.');
-      };
-
-      img.src = imageUrl;
-    }
-
-    // FUNCIÓN PARA ADJUNTAR Y LEER ARCHIVOS LOCALE
+    // LECTURA LOCAL DE ARCHIVOS (Texto o Código)
     function procesarArchivo(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        const contenido = e.target.result;
-        inputArea.value = `Analiza el contenido del archivo "${file.name}":\n\n${contenido}`;
+        inputArea.value = `Analiza el contenido del archivo "${file.name}":\n\n${e.target.result}`;
       };
 
       reader.readAsText(file);
-      event.target.value = ''; // Resetear input
+      event.target.value = '';
     }
 
-    // MULTI-RUTA CON BYPASS DE PROXIES
+    // ESTRATEGIA DE RESPUESTA DE TEXTO
     async function fetchFastAI(prompt) {
-      const encoded = encodeURIComponent(prompt);
-      const directTarget = `https://text.pollinations.ai/${encoded}?model=openai`;
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const routes = [
-        { name: 'Ruta Directa', url: directTarget },
-        { name: 'Proxy Seguro 1', url: `https://api.allorigins.win/raw?url=${encodeURIComponent(directTarget)}` },
-        { name: 'Proxy Seguro 2', url: `https://corsproxy.io/?${encodeURIComponent(directTarget)}` },
-        { name: 'Ruta Alternativa', url: `https://text.pollinations.ai/${encoded}?model=mistral` }
-      ];
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
 
-      for (const route of routes) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 6000);
-
-          const res = await fetch(route.url, { signal: controller.signal });
-          clearTimeout(timeout);
-
-          if (res.ok) {
-            const txt = await res.text();
-            if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>') && !txt.includes('Access Denied')) {
-              return { content: txt.trim(), source: route.name };
-            }
+        if (res.ok) {
+          const txt = await res.text();
+          if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
+            return { content: txt.trim(), source: 'Pakete Fast-Cloud' };
           }
-        } catch (e) {}
-      }
+        }
+      } catch (e) {}
 
-      throw new Error('Bloqueo total de red');
+      try {
+        const res = await fetch('https://text.pollinations.ai/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: prompt }],
+            model: 'openai'
+          })
+        });
+        if (res.ok) {
+          const txt = await res.text();
+          if (txt && txt.trim() && !txt.includes('<!DOCTYPE html>')) {
+            return { content: txt.trim(), source: 'Cloud Fallback' };
+          }
+        }
+      } catch (e) {}
+
+      throw new Error('No se pudo obtener respuesta');
     }
 
     function appendMsg(role, text, source = '') {
